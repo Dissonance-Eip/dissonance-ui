@@ -7,6 +7,8 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
+    "copy-core-addon": "node ./scripts/copy-core-addon.js",
+    "dev:copy-start": "npm run copy-core-addon && npm run dev",
     "test": "echo \"No tests yet\""
   },
   "author": "",
