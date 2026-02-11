@@ -1,0 +1,99 @@
+name: Sync Core Addon
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Release tag to download (use 'latest' for newest)"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+
+jobs:
+  download-core-addon:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout UI repo
+        uses: actions/checkout@v4
+
+      - name: Resolve release asset
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.CORE_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+          RELEASE_INPUT: ${{ inputs.release }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import platform as py_platform
+          import sys
+          import urllib.request
+
+          repo = "Dissonance-Eip/core"
+          release_input = os.environ.get("RELEASE_INPUT") or "latest"
+          token = os.environ.get("GH_TOKEN")
+
+          sys_platform = sys.platform
+          if sys_platform.startswith("win"):
+            platform_name = "win32"
+          elif sys_platform.startswith("darwin"):
+            platform_name = "darwin"
+          else:
+            platform_name = "linux"
+
+          machine = py_platform.machine().lower()
+          if machine in ("x86_64", "amd64"):
+            arch = "x64"
+          elif machine in ("aarch64", "arm64"):
+            arch = "arm64"
+          else:
+            arch = machine or "x64"
+
+          if release_input == "latest":
+            url = f"https://api.github.com/repos/{repo}/releases/latest"
+          else:
+            url = f"https://api.github.com/repos/{repo}/releases/tags/{release_input}"
+
+          req = urllib.request.Request(url)
+          if token:
+            req.add_header("Authorization", f"Bearer {token}")
+          req.add_header("Accept", "application/vnd.github+json")
+
+          data = json.loads(urllib.request.urlopen(req).read().decode("utf-8"))
+          asset_name = f"dissonance_core-{platform_name}-{arch}.node"
+          asset = next((a for a in data.get("assets", []) if a.get("name") == asset_name), None)
+
+          if not asset:
+            raise SystemExit(f"Asset '{asset_name}' not found in release '{data.get('tag_name')}'")
+
+          output_path = os.environ["GITHUB_OUTPUT"]
+          with open(output_path, "a", encoding="utf-8") as f:
+            f.write(f"asset_url={asset['url']}\n")
+            f.write(f"asset_name={asset['name']}\n")
+            f.write(f"tag_name={data.get('tag_name','')}\n")
+          PY
+
+      - name: Download core addon
+        env:
+          GH_TOKEN: ${{ secrets.CORE_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p build/Release
+          curl -L \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/octet-stream" \
+            "${{ steps.release.outputs.asset_url }}" \
+            -o build/Release/dissonance_core.node
+
+      - name: Verify download
+        run: |
+          ls -la build/Release
+          sha256sum build/Release/dissonance_core.node
+
+      - name: Upload addon artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dissonance_core.node
+          path: build/Release/dissonance_core.node
