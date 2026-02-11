@@ -1,46 +1,54 @@
 name: Sync Core Addon
-
 on:
   workflow_dispatch:
     inputs:
       release:
-        description: "Release tag to download (use 'latest' for newest)"
+        description: Release tag to download (use 'latest' for newest)
         required: false
-        default: "latest"
-
+        default: latest
 permissions:
   contents: read
-
 jobs:
   download-core-addon:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout UI repo
         uses: actions/checkout@v4
-
       - name: Resolve release asset
         id: release
         env:
           RELEASE_INPUT: ${{ inputs.release }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
+        run: >
           python3 << 'EOF'
+
           import json
+
           import os
+
           import platform as py_platform
+
           import sys
+
           import urllib.request
 
+
           repo = "Dissonance-Eip/core"
+
           release_input = os.environ.get("RELEASE_INPUT", "latest")
+
           token = os.environ.get("GITHUB_TOKEN", "")
 
+
           # Determine platform name (Linux)
+
           sys_platform = "linux"
-          
+
+
           # Determine architecture
+
           machine = py_platform.machine().lower()
+
           if machine in ("x86_64", "amd64"):
             arch = "x64"
           elif machine in ("aarch64", "arm64"):
@@ -50,6 +58,7 @@ jobs:
 
           platform_name = f"{sys_platform}-{arch}"
 
+
           if release_input == "latest":
             url = f"https://api.github.com/repos/{repo}/releases/latest"
           else:
@@ -58,10 +67,12 @@ jobs:
           headers = {
             "Accept": "application/vnd.github+json"
           }
+
           if token:
             headers["Authorization"] = f"Bearer {token}"
 
           req = urllib.request.Request(url, headers=headers)
+
           try:
             response = urllib.request.urlopen(req)
             data = json.loads(response.read().decode("utf-8"))
@@ -70,7 +81,9 @@ jobs:
             sys.exit(1)
 
           asset_name = f"dissonance_core-{platform_name}.node"
+
           asset = next((a for a in data.get("assets", []) if a.get("name") == asset_name), None)
+
 
           if not asset:
             print(f"Asset '{asset_name}' not found in release")
@@ -78,12 +91,12 @@ jobs:
             sys.exit(1)
 
           output_file = os.environ.get("GITHUB_OUTPUT")
+
           with open(output_file, "a") as f:
             f.write(f"asset_url={asset['url']}\n")
             f.write(f"asset_name={asset['name']}\n")
             f.write(f"tag_name={data.get('tag_name', '')}\n")
           EOF
-
       - name: Download core addon
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -94,12 +107,10 @@ jobs:
             -H "Accept: application/octet-stream" \
             "${{ steps.release.outputs.asset_url }}" \
             -o build/Release/dissonance_core.node
-
       - name: Verify download
         run: |
           ls -la build/Release/
           file build/Release/dissonance_core.node
-
       - name: Upload addon artifact
         uses: actions/upload-artifact@v4
         with:
