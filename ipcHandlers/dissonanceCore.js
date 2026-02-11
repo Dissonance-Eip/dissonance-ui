@@ -6,15 +6,30 @@ const os = require('os');
 // Try to load the native core addon (C++ -> node addon). If unavailable, fall back to simulation.
 let coreAddon = null;
 try {
-  coreAddon = require('bindings')('dissonance_core');
+  // Try the local build first (the one we copy from core)
+  const addonPath = path.join(__dirname, '..', 'build', 'Release', 'dissonance_core.node');
+  console.log('Trying to load addon from:', addonPath);
+  coreAddon = require(addonPath);
+  console.log('Loaded addon from local build path');
 } catch (e) {
+  console.log('Could not load from local build:', e.message);
   try {
-    coreAddon = require(path.join(__dirname, '..', 'build', 'Release', 'dissonance_core.node'));
-  } catch (e2) {
-    coreAddon = null;
+    coreAddon = require('dissonance-core');
+    console.log('Loaded addon from dissonance-core package');
+  } catch (pkgErr) {
+    try {
+      coreAddon = require('bindings')('dissonance_core');
+      console.log('Loaded addon using bindings()');
+    } catch (bindErr) {
+      console.log('Could not load addon:', bindErr.message);
+      coreAddon = null;
+    }
   }
 }
 console.log('dissonance core addon loaded:', !!coreAddon);
+if (coreAddon) {
+  console.log('Available functions:', Object.keys(coreAddon));
+}
 
 function forward(win, channel, payload) {
   try {
@@ -71,12 +86,17 @@ function registerCoreHandlers(mainWindow) {
 
     if (coreAddon && typeof coreAddon.process === 'function') {
       try {
+        console.log('[DEBUG] Calling coreAddon.process()');
         forward(mainWindow, 'core:status', { status: 'sending', message: 'Sending to dissonance-core (addon)...' });
         attachAddonEventForwarding(coreAddon, mainWindow);
         forward(mainWindow, 'core:status', { status: 'processing', message: 'Processing started' });
 
         const result = coreAddon.process(filePath, options);
-        const resolved = result && typeof result.then === 'function' ? await result : result;
+        console.log('[DEBUG] process() returned:', result);
+        
+        // Wait a bit for the result
+        const resolved = result && typeof result.then === 'function' ? await Promise.race([result, new Promise(r => setTimeout(() => r(null), 5000))]) : result;
+        
         const processedPath = (resolved && resolved.processedPath) || null;
 
         forward(mainWindow, 'core:status', { status: 'processed', message: 'Processing complete', processedPath });
@@ -86,6 +106,9 @@ function registerCoreHandlers(mainWindow) {
         forward(mainWindow, 'core:status', { status: 'error', message: 'Processing failed', error: String(err) });
         return { ok: false, error: String(err) };
       }
+    } else {
+      console.log('[DEBUG] coreAddon.process is NOT a function. coreAddon:', coreAddon);
+      console.log('[DEBUG] coreAddon.process:', coreAddon?.process);
     }
 
     // fallback: simulation
