@@ -2,9 +2,12 @@ name: Sync Core Addon into UI
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types:
+      - core-release
   push:
     branches:
-      - github-action-for-automatic-implementation-with-core
+      - dev
     paths-ignore:
       - "Build/Release/**"
 
