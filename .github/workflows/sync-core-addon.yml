@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - github-action-for-automatic-workflow-with-ui
+      - github-action-for-automatic-implementation-with-core
     paths-ignore:
       - "Build/Release/**"
 
