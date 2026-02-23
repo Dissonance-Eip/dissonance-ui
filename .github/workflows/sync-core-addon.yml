@@ -9,7 +9,7 @@ on:
     branches:
       - dev
     paths-ignore:
-      - "Build/Release/**"
+      - 'Build/Release/**'
 
 permissions:
   contents: write

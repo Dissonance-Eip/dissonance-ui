@@ -17,7 +17,10 @@ async function main() {
   const argv = process.argv.slice(2);
   let sourceArg = null;
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === '--source' && argv[i+1]) { sourceArg = argv[i+1]; break; }
+    if (argv[i] === '--source' && argv[i + 1]) {
+      sourceArg = argv[i + 1];
+      break;
+    }
     if (!argv[i].startsWith('-') && !sourceArg) sourceArg = argv[i];
   }
 
@@ -27,8 +30,21 @@ async function main() {
 
   // common relative paths to the core build
   candidates.push(path.join(uiRoot, '..', 'core', 'build', 'Release', 'dissonance_core.node'));
-  candidates.push(path.join(uiRoot, '..', '..', 'CLionProjects', 'core', 'build', 'Release', 'dissonance_core.node'));
-  candidates.push(path.join(uiRoot, '..', '..', 'core', 'build', 'Release', 'dissonance_core.node'));
+  candidates.push(
+    path.join(
+      uiRoot,
+      '..',
+      '..',
+      'CLionProjects',
+      'core',
+      'build',
+      'Release',
+      'dissonance_core.node'
+    )
+  );
+  candidates.push(
+    path.join(uiRoot, '..', '..', 'core', 'build', 'Release', 'dissonance_core.node')
+  );
   candidates.push('C:\\Users\\luca\\CLionProjects\\core\\build\\Release\\dissonance_core.node');
 
   // Attempt to find the file by walking up a few levels looking for core/build/Release
@@ -42,21 +58,32 @@ async function main() {
 
   // Deduplicate preserving order
   const seen = new Set();
-  const finalCandidates = candidates.filter(p => {
-    try { p = path.resolve(p); } catch(e) {}
-    if (seen.has(p)) return false; seen.add(p); return true;
+  const finalCandidates = candidates.filter((p) => {
+    try {
+      p = path.resolve(p);
+    } catch (e) {}
+    if (seen.has(p)) return false;
+    seen.add(p);
+    return true;
   });
 
   let found = null;
   for (const c of finalCandidates) {
     if (!c) continue;
-    if (fs.existsSync(c)) { found = c; break; }
+    if (fs.existsSync(c)) {
+      found = c;
+      break;
+    }
   }
 
   if (!found) {
-    console.error('\nCould not find a built `dissonance_core.node` artifact. Tried the following locations:');
-    finalCandidates.forEach(p => console.error(' - ' + p));
-    console.error('\nBuild the native addon in the core project (e.g. with node-gyp or your CMake build) and re-run this script.');
+    console.error(
+      '\nCould not find a built `dissonance_core.node` artifact. Tried the following locations:'
+    );
+    finalCandidates.forEach((p) => console.error(' - ' + p));
+    console.error(
+      '\nBuild the native addon in the core project (e.g. with node-gyp or your CMake build) and re-run this script.'
+    );
     process.exitCode = 2;
     return;
   }
@@ -72,5 +99,8 @@ async function main() {
   }
 }
 
-if (process.argv.includes('--help') || process.argv.includes('-h')) { usage(); process.exit(0); }
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  usage();
+  process.exit(0);
+}
 main();

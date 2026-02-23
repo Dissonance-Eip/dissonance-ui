@@ -1,0 +1,58 @@
+name: UI Quality Checks
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  merge_group:
+    types:
+      - checks_requested
+
+jobs:
+  quality-checks:
+    name: Lint, Format, Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Validate required npm scripts
+        run: |
+          node -e "const scripts = (require('./package.json').scripts || {}); const missing = ['lint','format','build'].filter((name) => !scripts[name]); if (missing.length) { console.error('Missing required npm script(s): ' + missing.join(', ')); process.exit(1); }"
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run format check
+        run: |
+          if npm run | grep -q "format:check"; then
+            npm run format:check
+          else
+            npm run format -- --check
+          fi
+
+      - name: Run build check
+        run: npm run build

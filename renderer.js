@@ -104,7 +104,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // Drag & drop behaviour
-    ['dragenter', 'dragover'].forEach(evt => {
+    ['dragenter', 'dragover'].forEach((evt) => {
       dropZone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -112,7 +112,7 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    ['dragleave', 'drop'].forEach(evt => {
+    ['dragleave', 'drop'].forEach((evt) => {
       dropZone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
