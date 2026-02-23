@@ -42,7 +42,10 @@ function forward(win, channel, payload) {
 }
 
 async function simulateProcessing(filePath, mainWindow) {
-  forward(mainWindow, 'core:status', { status: 'sending', message: 'Sending to dissonance-core (simulated)...' });
+  forward(mainWindow, 'core:status', {
+    status: 'sending',
+    message: 'Sending to dissonance-core (simulated)...',
+  });
   await new Promise((r) => setTimeout(r, 500));
 
   forward(mainWindow, 'core:status', { status: 'processing', message: 'Processing started' });
@@ -58,7 +61,11 @@ async function simulateProcessing(filePath, mainWindow) {
   const processedPath = path.join(tmpDir, `${base}-processed${ext}`);
   await fs.copyFile(filePath, processedPath);
 
-  forward(mainWindow, 'core:status', { status: 'processed', message: 'Processing complete', processedPath });
+  forward(mainWindow, 'core:status', {
+    status: 'processed',
+    message: 'Processing complete',
+    processedPath,
+  });
   return { ok: true, processedPath };
 }
 
@@ -87,23 +94,37 @@ function registerCoreHandlers(mainWindow) {
     if (coreAddon && typeof coreAddon.process === 'function') {
       try {
         console.log('[DEBUG] Calling coreAddon.process()');
-        forward(mainWindow, 'core:status', { status: 'sending', message: 'Sending to dissonance-core (addon)...' });
+        forward(mainWindow, 'core:status', {
+          status: 'sending',
+          message: 'Sending to dissonance-core (addon)...',
+        });
         attachAddonEventForwarding(coreAddon, mainWindow);
         forward(mainWindow, 'core:status', { status: 'processing', message: 'Processing started' });
 
         const result = coreAddon.process(filePath, options);
         console.log('[DEBUG] process() returned:', result);
-        
+
         // Wait a bit for the result
-        const resolved = result && typeof result.then === 'function' ? await Promise.race([result, new Promise(r => setTimeout(() => r(null), 5000))]) : result;
-        
+        const resolved =
+          result && typeof result.then === 'function'
+            ? await Promise.race([result, new Promise((r) => setTimeout(() => r(null), 5000))])
+            : result;
+
         const processedPath = (resolved && resolved.processedPath) || null;
 
-        forward(mainWindow, 'core:status', { status: 'processed', message: 'Processing complete', processedPath });
+        forward(mainWindow, 'core:status', {
+          status: 'processed',
+          message: 'Processing complete',
+          processedPath,
+        });
         return { ok: true, processedPath };
       } catch (err) {
         console.error('Core addon processing error', err);
-        forward(mainWindow, 'core:status', { status: 'error', message: 'Processing failed', error: String(err) });
+        forward(mainWindow, 'core:status', {
+          status: 'error',
+          message: 'Processing failed',
+          error: String(err),
+        });
         return { ok: false, error: String(err) };
       }
     } else {
@@ -123,7 +144,8 @@ function registerCoreHandlers(mainWindow) {
 
   ipcMain.handle('core:export', async (_event, payload) => {
     // payload can be a string (processedPath) or an object { processedPath, destPath }
-    const processedPathStr = typeof payload === 'string' ? payload : (payload && payload.processedPath) || null;
+    const processedPathStr =
+      typeof payload === 'string' ? payload : (payload && payload.processedPath) || null;
     const destPath = (payload && payload.destPath) || null;
 
     if (!processedPathStr) return { ok: false, error: 'No processed file path' };
@@ -138,9 +160,7 @@ function registerCoreHandlers(mainWindow) {
         const result = await dialog.showSaveDialog({
           title: 'Export processed file',
           defaultPath: path.basename(processedPathStr),
-          filters: [
-            { name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'm4a', 'flac'] },
-          ],
+          filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'm4a', 'flac'] }],
         });
         canceled = result.canceled;
         filePath = result.filePath;
@@ -168,4 +188,3 @@ function registerCoreHandlers(mainWindow) {
 }
 
 module.exports = { registerCoreHandlers, coreAddon };
-

@@ -11,6 +11,5 @@ contextBridge.exposeInMainWorld('dissonance', {
     const handler = (_event, data) => cb(data);
     ipcRenderer.on('core:status', handler);
     return () => ipcRenderer.removeListener('core:status', handler);
-  }
+  },
 });
-
