@@ -16,6 +16,10 @@ on:
     types:
       - checks_requested
 
+concurrency:
+  group: ui-quality-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   quality-checks:
     name: Lint, Format, Build
