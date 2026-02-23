@@ -13,6 +13,7 @@ async function main() {
   const uiRoot = path.resolve(__dirname, '..');
   const destDir = path.join(uiRoot, 'build', 'Release');
   const destPath = path.join(destDir, 'dissonance_core.node');
+  const platformBinaryName = `dissonance_core-${process.platform}-${process.arch}.node`;
 
   const argv = process.argv.slice(2);
   let sourceArg = null;
@@ -46,6 +47,13 @@ async function main() {
     path.join(uiRoot, '..', '..', 'core', 'build', 'Release', 'dissonance_core.node')
   );
   candidates.push('C:\\Users\\luca\\CLionProjects\\core\\build\\Release\\dissonance_core.node');
+
+  // fallback to prebuilt binaries already present in this repo (useful on CI)
+  candidates.push(path.join(destDir, platformBinaryName));
+  candidates.push(path.join(destDir, 'dissonance_core-linux-x64.node'));
+  candidates.push(path.join(destDir, 'dissonance_core-win32-x64.node'));
+  candidates.push(path.join(destDir, 'dissonance_core-darwin-arm64.node'));
+  candidates.push(destPath);
 
   // Attempt to find the file by walking up a few levels looking for core/build/Release
   const maxUp = 4;
@@ -90,6 +98,11 @@ async function main() {
 
   try {
     await fsp.mkdir(destDir, { recursive: true });
+    if (path.resolve(found) === path.resolve(destPath)) {
+      console.log(`Addon already available at ${destPath}`);
+      process.exitCode = 0;
+      return;
+    }
     await fsp.copyFile(found, destPath);
     console.log(`Copied ${found} -> ${destPath}`);
     process.exitCode = 0;
