@@ -30,6 +30,27 @@
       gap: 0.75rem;
     }
 
+    .view[hidden] {
+      display: none;
+    }
+
+    #welcome {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1.0rem 0;
+    }
+
+    #mainView {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
     #controls {
       display: flex;
       justify-content: center;
@@ -37,6 +58,35 @@
       margin-bottom: 0.5rem;
       align-items: center;
       flex-wrap: wrap;
+    }
+
+    #fileRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(15, 23, 42, 0.35);
+      border-radius: 0.5rem;
+    }
+
+    #selectedFile {
+      font-size: 0.85rem;
+      color: #e5e7eb;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #changeFileBtn {
+      appearance: none;
+      border: 1px solid rgba(248, 250, 252, 0.35);
+      background: rgba(15, 23, 42, 0.35);
+      color: #e5e7eb;
+      border-radius: 999px;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.85rem;
+      cursor: pointer;
     }
 
     #dropZone {
@@ -121,18 +171,33 @@
     <p>Import an audio file, then process and export it via simulated dissonance-core.</p>
   </header>
   <main>
-    <div id="controls">
-      <div id="dropZone">
-        Drop an audio file here or <span class="accent">choose file</span>
+    <section id="view-welcome" class="view">
+      <div id="welcome">
+        <div id="dropZone">
+          Drop an audio file here or <span class="accent">choose file</span>
+        </div>
       </div>
-      <button id="processBtn" type="button" disabled>Process</button>
-      <button id="exportBtn" type="button" disabled>Export</button>
-    </div>
-    <div id="log-container">
-      <div id="log"></div>
-    </div>
-    <div id="status"></div>
+    </section>
+
+    <section id="view-main" class="view" hidden>
+      <div id="mainView">
+        <div id="fileRow">
+          <div id="selectedFile">No file selected</div>
+          <button id="changeFileBtn" type="button">Change file</button>
+        </div>
+
+        <div id="controls">
+          <button id="processBtn" type="button" disabled>Process</button>
+          <button id="exportBtn" type="button" disabled>Export</button>
+        </div>
+
+        <div id="log-container">
+          <div id="log"></div>
+        </div>
+        <div id="status"></div>
+      </div>
+    </section>
   </main>
-  <script src="renderer.js"></script>
+  <script type="module" src="./renderer/index.js"></script>
 </body>
 </html>
