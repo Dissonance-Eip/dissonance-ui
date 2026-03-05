@@ -30,7 +30,9 @@ function getAddonCandidates() {
   // Legacy / alternative locations and names.
   candidates.push(path.join(__dirname, '..', 'Build', 'Release', 'dissonance_core.node'));
   candidates.push(path.join(__dirname, '..', 'build', 'Release', 'dissonance_core.node'));
-  candidates.push(path.join(__dirname, '..', 'build', 'Release', `dissonance_core-${platform}-${arch}.node`));
+  candidates.push(
+    path.join(__dirname, '..', 'build', 'Release', `dissonance_core-${platform}-${arch}.node`)
+  );
 
   // Dedupe while preserving order.
   return [...new Set(candidates.filter(Boolean))];
