@@ -20,14 +20,17 @@ function createWindow() {
   });
 
   mainWindow.once('ready-to-show', () => {
-    try { mainWindow.show(); } catch (_) {}
+    try {
+      mainWindow.show();
+    } catch (_) {}
   });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'index.html'))
+  mainWindow
+    .loadFile(path.join(__dirname, 'index.html'))
     .catch((e) => console.error('Failed to load index.html:', e));
 
   registerFileHandlers(mainWindow);

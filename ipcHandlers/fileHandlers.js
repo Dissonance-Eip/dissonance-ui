@@ -1,15 +1,12 @@
 const { ipcMain, dialog } = require('electron');
 const fs = require('fs').promises;
 const path = require('path');
-const os = require('os');
 
 function registerFileHandlers(mainWindow) {
   ipcMain.handle('dialog:openFile', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       properties: ['openFile'],
-      filters: [
-        { name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'm4a', 'flac'] },
-      ],
+      filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'm4a', 'flac'] }],
     });
     if (canceled || !filePaths || filePaths.length === 0) return null;
     return filePaths[0];

@@ -7,14 +7,24 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "copy-core-addon": "node ./scripts/copy-core-addon.js",
-    "dev:copy-start": "npm run copy-core-addon && npm run dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check .",
+    "build": "electron-builder --dir",
     "test": "echo \"No tests yet\""
   },
   "author": "",
   "license": "MIT",
-  "devDependencies": {
-    "electron": "^28.0.0"
+  "dependencies": {
+    "bindings": "^1.5.0"
   },
-  "dependencies": {}
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "electron": "^40.6.0",
+    "electron-builder": "^26.8.1",
+    "eslint": "^10.0.1",
+    "globals": "^17.3.0",
+    "prettier": "^3.6.2"
+  }
 }
