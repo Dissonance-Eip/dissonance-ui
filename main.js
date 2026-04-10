@@ -1,6 +1,7 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const { registerFileHandlers } = require('./ipcHandlers/fileHandlers');
+const { cleanupAllTempFiles } = require('./ipcHandlers/dissonanceCore');
 
 let mainWindow = null;
 
@@ -26,6 +27,8 @@ function createWindow() {
   });
 
   mainWindow.on('closed', () => {
+    // Best-effort cleanup of any temp processed files.
+    Promise.resolve(cleanupAllTempFiles()).catch(() => {});
     mainWindow = null;
   });
 
@@ -48,5 +51,10 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  Promise.resolve(cleanupAllTempFiles()).catch(() => {});
   app.quit();
+});
+
+app.on('before-quit', () => {
+  Promise.resolve(cleanupAllTempFiles()).catch(() => {});
 });

@@ -53,14 +53,54 @@ export class AppController {
   }
 
   importFile(filePath, sourceLabel) {
+    if (this.state.processedFilePath) {
+      // Best-effort cleanup of the previous processed temp file.
+      this.api.cleanupProcessedFile(this.state.processedFilePath).catch(() => {});
+    }
+
     this.state.setCurrentFilePath(filePath);
     this.mainView.setSelectedFile(filePath);
+    const filename = filePath ? String(filePath).split(/[/\\]/).pop() : null;
+    this.mainView.setBasicWavInfo({ filename });
 
     this.logger?.log?.(`${sourceLabel} file: ${filePath}`);
     this.logger?.setStatus?.('File imported');
 
     this.router.show('main');
     this._syncButtons();
+
+    // Fetch WAV metadata immediately (does not create a processed file).
+    this._inspectCurrentFile(filePath);
+  }
+
+  async _inspectCurrentFile(filePath) {
+    if (!filePath) return;
+    try {
+      this.logger?.setStatus?.('Reading metadata…');
+      const resp = await this.api.inspectFile(filePath);
+      if (resp && resp.ok && resp.metadata) {
+        const meta = resp.metadata;
+        const filename = filePath ? String(filePath).split(/[/\\]/).pop() : null;
+        const sampleRate = typeof meta.sampleRate === 'number' ? meta.sampleRate : null;
+        const channels = typeof meta.numChannels === 'number' ? meta.numChannels : null;
+
+        let durationSec = null;
+        if (typeof meta.numSamples === 'number' && sampleRate && channels) {
+          const frames = meta.numSamples / channels;
+          durationSec = frames / sampleRate;
+        }
+
+        this.mainView.setBasicWavInfo({ filename, durationSec, sampleRate, channels });
+        this.logger?.setStatus?.('Ready');
+        return;
+      }
+
+      const errMsg = resp && resp.error ? resp.error : 'Unknown error';
+      this.logger?.setStatus?.(`Metadata failed: ${errMsg}`, true);
+      this.logger?.log?.(`Metadata failed: ${errMsg}`);
+    } catch (err) {
+      this.logger?.error?.(`Metadata failed: ${err}`);
+    }
   }
 
   async processCurrentFile() {
@@ -76,6 +116,34 @@ export class AppController {
       const resp = await this.api.processFile(this.state.currentFilePath);
       if (resp && resp.ok && resp.processedPath) {
         this.state.setProcessedFilePath(resp.processedPath);
+
+        const meta = resp.metadata || null;
+        const filename = this.state.currentFilePath
+          ? String(this.state.currentFilePath).split(/[/\\]/).pop()
+          : null;
+        const sampleRate = meta && typeof meta.sampleRate === 'number' ? meta.sampleRate : null;
+        const channels = meta && typeof meta.numChannels === 'number' ? meta.numChannels : null;
+
+        let durationSec = null;
+        if (meta && typeof meta.numSamples === 'number' && sampleRate && channels) {
+          const frames = meta.numSamples / channels;
+          durationSec = frames / sampleRate;
+        } else if (
+          meta &&
+          typeof meta.subchunk2Size === 'number' &&
+          sampleRate &&
+          channels &&
+          meta.bitsPerSample
+        ) {
+          const bytesPerSample = meta.bitsPerSample / 8;
+          if (bytesPerSample > 0) {
+            const totalSamples = meta.subchunk2Size / bytesPerSample;
+            durationSec = totalSamples / (channels * sampleRate);
+          }
+        }
+
+        this.mainView.setBasicWavInfo({ filename, durationSec, sampleRate, channels });
+
         this.logger?.setStatus?.('Processed');
         this.logger?.log?.(`Processing complete: ${resp.processedPath}`);
         this._syncButtons();
@@ -102,6 +170,9 @@ export class AppController {
 
       const resp = await this.api.exportFile(this.state.processedFilePath);
       if (resp && resp.ok && resp.exportedPath) {
+        // After export, the main process cleans up the temp processed file.
+        this.state.setProcessedFilePath(null);
+        this._syncButtons();
         this.logger?.setStatus?.('Exported');
         this.logger?.log?.(`Exported to: ${resp.exportedPath}`);
         return;

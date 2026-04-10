@@ -15,6 +15,14 @@ export class DissonanceApi {
     return this.bridge.getFileStats(filePath);
   }
 
+  async inspectFile(filePath) {
+    return this.bridge.inspectFile(filePath);
+  }
+
+  async cleanupProcessedFile(processedPath) {
+    return this.bridge.cleanupProcessedFile(processedPath);
+  }
+
   async processFile(filePath) {
     return this.bridge.processFile(filePath);
   }

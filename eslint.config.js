@@ -7,12 +7,11 @@ module.exports = [
   },
   js.configs.recommended,
   {
-    files: ['**/*.js'],
+    files: ['renderer/**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
-      sourceType: 'commonjs',
+      sourceType: 'module',
       globals: {
-        ...globals.node,
         ...globals.browser,
       },
     },
@@ -25,6 +24,35 @@ module.exports = [
           caughtErrors: 'none',
         },
       ],
+    },
+  },
+  {
+    files: ['**/*.js'],
+    ignores: ['renderer/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          caughtErrors: 'none',
+        },
+      ],
+    },
+  },
+  {
+    files: ['renderer.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
     },
   },
 ];

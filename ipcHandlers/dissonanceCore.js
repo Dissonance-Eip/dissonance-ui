@@ -4,6 +4,45 @@ const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
 
+const TEMP_ROOT_DIR = path.join(os.tmpdir(), 'dissonance');
+const tempFiles = new Set();
+const tempFileBySenderId = new Map();
+
+async function safeUnlink(filePath) {
+  if (!filePath) return;
+  try {
+    await fs.unlink(filePath);
+  } catch (_e) {
+    // ignore
+  }
+}
+
+function isUnderTempRoot(filePath) {
+  if (!filePath) return false;
+  try {
+    const rel = path.relative(TEMP_ROOT_DIR, filePath);
+    return rel && !rel.startsWith('..') && !path.isAbsolute(rel);
+  } catch (_e) {
+    return false;
+  }
+}
+
+async function cleanupTempFile(filePath) {
+  if (!filePath) return;
+  if (!tempFiles.has(filePath) && !isUnderTempRoot(filePath)) return;
+  await safeUnlink(filePath);
+  tempFiles.delete(filePath);
+  for (const [senderId, p] of tempFileBySenderId.entries()) {
+    if (p === filePath) tempFileBySenderId.delete(senderId);
+  }
+}
+
+function makeTempProcessedPath(inputPath) {
+  const base = path.basename(inputPath, path.extname(inputPath) || '.wav');
+  const stamp = Date.now();
+  return path.join(TEMP_ROOT_DIR, `${base}-processed-${stamp}.wav`);
+}
+
 function tryResolve(moduleName) {
   try {
     return require.resolve(moduleName);
@@ -118,12 +157,11 @@ async function simulateProcessing(filePath, mainWindow) {
     forward(mainWindow, 'core:status', { status: 'processing', message: `Processing: ${p}%` });
   }
 
-  const ext = path.extname(filePath) || '.wav';
-  const base = path.basename(filePath, ext);
-  const tmpDir = path.join(os.tmpdir(), 'dissonance');
-  await fs.mkdir(tmpDir, { recursive: true });
-  const processedPath = path.join(tmpDir, `${base}-processed${ext}`);
+  await fs.mkdir(TEMP_ROOT_DIR, { recursive: true });
+  const processedPath = makeTempProcessedPath(filePath);
   await fs.copyFile(filePath, processedPath);
+
+  tempFiles.add(processedPath);
 
   forward(mainWindow, 'core:status', {
     status: 'processed',
@@ -144,6 +182,42 @@ function attachAddonEventForwarding(addon, mainWindow) {
 }
 
 function registerCoreHandlers(mainWindow) {
+  ipcMain.handle('core:cleanupProcessed', async (_event, payload) => {
+    const processedPath =
+      typeof payload === 'string' ? payload : (payload && payload.processedPath) || null;
+    if (!processedPath) return { ok: false, error: 'No processed file path' };
+
+    await cleanupTempFile(processedPath);
+    return { ok: true };
+  });
+
+  ipcMain.handle('core:inspect', async (_event, payload) => {
+    const filePath = typeof payload === 'string' ? payload : (payload && payload.filePath) || null;
+
+    console.log('core:inspect called with:', { filePath });
+    if (!mainWindow) return { ok: false, error: 'No main window' };
+    if (!filePath) return { ok: false, error: 'No file path provided' };
+
+    if (coreAddon && typeof coreAddon.inspect === 'function') {
+      try {
+        forward(mainWindow, 'core:status', { status: 'inspecting', message: 'Reading metadata…' });
+        const result = coreAddon.inspect(filePath);
+        forward(mainWindow, 'core:status', { status: 'inspected', message: 'Metadata loaded' });
+        return { ...(result || {}), ok: true };
+      } catch (err) {
+        console.error('Core addon inspect error', err);
+        forward(mainWindow, 'core:status', {
+          status: 'error',
+          message: 'Metadata read failed',
+          error: String(err),
+        });
+        return { ok: false, error: String(err) };
+      }
+    }
+
+    return { ok: false, error: 'Core addon inspect not available' };
+  });
+
   ipcMain.handle('core:process', async (_event, payload) => {
     const filePath = typeof payload === 'string' ? payload : (payload && payload.filePath) || null;
     const options = (payload && payload.options) || {};
@@ -155,7 +229,13 @@ function registerCoreHandlers(mainWindow) {
     // Notify UI that import succeeded
     forward(mainWindow, 'core:status', { status: 'imported', message: 'File imported to UI' });
 
+    const senderId = _event && _event.sender ? _event.sender.id : null;
+    if (senderId && tempFileBySenderId.has(senderId)) {
+      await cleanupTempFile(tempFileBySenderId.get(senderId));
+    }
+
     if (coreAddon && typeof coreAddon.process === 'function') {
+      let outputPath = null;
       try {
         console.log('[DEBUG] Calling coreAddon.process()');
         forward(mainWindow, 'core:status', {
@@ -165,7 +245,9 @@ function registerCoreHandlers(mainWindow) {
         attachAddonEventForwarding(coreAddon, mainWindow);
         forward(mainWindow, 'core:status', { status: 'processing', message: 'Processing started' });
 
-        const result = coreAddon.process(filePath, options);
+        await fs.mkdir(TEMP_ROOT_DIR, { recursive: true });
+        outputPath = makeTempProcessedPath(filePath);
+        const result = coreAddon.process(filePath, { ...options, outputPath });
         console.log('[DEBUG] process() returned:', result);
 
         // Wait a bit for the result
@@ -174,16 +256,30 @@ function registerCoreHandlers(mainWindow) {
             ? await Promise.race([result, new Promise((r) => setTimeout(() => r(null), 5000))])
             : result;
 
-        const processedPath = (resolved && resolved.processedPath) || null;
+        const processedPath = (resolved && resolved.processedPath) || outputPath || null;
+
+        if (processedPath) {
+          tempFiles.add(processedPath);
+          if (senderId) tempFileBySenderId.set(senderId, processedPath);
+        }
 
         forward(mainWindow, 'core:status', {
           status: 'processed',
           message: 'Processing complete',
           processedPath,
         });
-        return { ok: true, processedPath };
+
+        // Return all info from core so the renderer can display metadata.
+        // Keep `ok`/`processedPath` for backwards compatibility.
+        return { ...(resolved || {}), ok: true, processedPath };
       } catch (err) {
         console.error('Core addon processing error', err);
+
+        // Best-effort cleanup for any partial temp output.
+        try {
+          await cleanupTempFile(outputPath);
+        } catch (_e) {}
+
         forward(mainWindow, 'core:status', {
           status: 'error',
           message: 'Processing failed',
@@ -198,7 +294,11 @@ function registerCoreHandlers(mainWindow) {
 
     // fallback: simulation
     try {
-      return await simulateProcessing(filePath, mainWindow);
+      const resp = await simulateProcessing(filePath, mainWindow);
+      if (resp && resp.ok && resp.processedPath && senderId) {
+        tempFileBySenderId.set(senderId, resp.processedPath);
+      }
+      return resp;
     } catch (err) {
       console.error('Processing error', err);
       forward(mainWindow, 'core:status', { status: 'error', message: 'Processing failed' });
@@ -236,6 +336,9 @@ function registerCoreHandlers(mainWindow) {
 
       await fs.copyFile(processedPathStr, filePath);
 
+      // Cleanup temp processed file after a successful export.
+      await cleanupTempFile(processedPathStr);
+
       forward(mainWindow, 'core:status', {
         status: 'exported',
         message: `Exported to ${filePath}`,
@@ -251,4 +354,11 @@ function registerCoreHandlers(mainWindow) {
   });
 }
 
-module.exports = { registerCoreHandlers, coreAddon };
+async function cleanupAllTempFiles() {
+  const paths = Array.from(tempFiles);
+  await Promise.all(paths.map((p) => safeUnlink(p)));
+  tempFiles.clear();
+  tempFileBySenderId.clear();
+}
+
+module.exports = { registerCoreHandlers, cleanupAllTempFiles, coreAddon };

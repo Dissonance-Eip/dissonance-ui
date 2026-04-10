@@ -68,6 +68,31 @@
       flex-wrap: wrap;
     }
 
+    #metaPanel {
+      padding: 0.65rem 0.75rem;
+      background: rgba(15, 23, 42, 0.35);
+      border-radius: 0.5rem;
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      row-gap: 0.35rem;
+      column-gap: 0.75rem;
+      align-items: baseline;
+    }
+
+    #metaPanel .label {
+      font-size: 0.85rem;
+      color: #e5e7eb;
+      opacity: 0.9;
+    }
+
+    #metaPanel .value {
+      font-size: 0.85rem;
+      color: #e5e7eb;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     #fileRow {
       display: flex;
       align-items: center;
@@ -151,28 +176,12 @@
       }
 
       #log-container {
-        flex: 1;
-        background: rgba(15, 23, 42, 0.7);
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        overflow-y: auto;
-        font-family:
-          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-          monospace;
-        font-size: 0.8rem;
+        display: none;
       }
 
       #status {
-        margin-top: 0.25rem;
-        font-size: 0.85rem;
-        min-height: 1.2em;
+        display: none;
       }
-
-    .log-entry {
-      margin-bottom: 0.15rem;
-      text-align: left;
-      white-space: pre-wrap;
-    }
   </style>
 </head>
 <body>
@@ -201,10 +210,20 @@
           <button id="exportBtn" type="button" disabled>Export</button>
         </div>
 
-        <div id="log-container">
-          <div id="log"></div>
+        <div id="metaPanel" aria-label="WAV basic info">
+          <div class="label">Filename</div>
+          <div id="metaFilename" class="value">—</div>
+
+          <div class="label">Duration</div>
+          <div id="metaDuration" class="value">—</div>
+
+          <div class="label">Sample rate</div>
+          <div id="metaSampleRate" class="value">—</div>
+
+          <div class="label">Channels</div>
+          <div id="metaChannels" class="value">—</div>
         </div>
-        <div id="status"></div>
+
       </div>
     </section>
   </main>
