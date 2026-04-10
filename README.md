@@ -34,13 +34,37 @@ Dissonance UI is a cross-platform desktop app that helps defend audio content fr
 ## Getting Started
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
+
 2. Run the app locally:
+
    ```bash
    npm start
    ```
+
+---
+
+## Code Organization (OOP)
+
+The app is structured to be easy to extend and keep responsibilities separated:
+
+- **Main process (Electron):**
+  - `main/` contains app/window lifecycle classes.
+  - `ipcHandlers/` contains IPC registration, split by responsibility.
+  - `preload.js` exposes a minimal, explicit bridge to the renderer.
+- **Renderer process (UI):**
+  - `renderer/app/bootstrap.js` is the only composition root.
+  - `renderer/controllers/` orchestrates flows.
+  - `renderer/views/` owns DOM updates and view-level events.
+  - `renderer/components/` are reusable UI pieces.
+  - `renderer/services/` contains business logic.
+  - `renderer/infrastructure/` wraps platform/bridge concerns.
+  - `renderer/base/` provides shared lifecycle + disposal helpers.
+
+More detail: see `renderer/ARCHITECTURE.md`.
 
 ---
 

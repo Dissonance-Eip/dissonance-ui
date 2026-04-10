@@ -1,18 +1,27 @@
-export class AppController {
-  constructor({ api, logger, router, state, welcomeView, mainView }) {
+import { BaseController } from '../base/BaseController.js';
+
+export class AppController extends BaseController {
+  constructor({ api, logger, router, state, welcomeView, mainView, wavMetadataService }) {
+    super();
     this.api = api;
     this.logger = logger;
     this.router = router;
     this.state = state;
     this.welcomeView = welcomeView;
     this.mainView = mainView;
+    this.wavMetadataService = wavMetadataService;
 
     this._onGlobalDragOver = this._onGlobalDragOver.bind(this);
     this._onGlobalDrop = this._onGlobalDrop.bind(this);
   }
 
   start() {
+    super.start();
     this.welcomeView.mount();
+    this.track(() => this.welcomeView.unmount());
+
+    this.mainView.mount();
+    this.track(() => this.mainView.unmount());
 
     this.router.show('welcome');
 
@@ -41,12 +50,17 @@ export class AppController {
     // Prevent the browser/Electron from navigating to the dropped file.
     window.addEventListener('dragover', this._onGlobalDragOver);
     window.addEventListener('drop', this._onGlobalDrop);
+    this.track(() => window.removeEventListener('dragover', this._onGlobalDragOver));
+    this.track(() => window.removeEventListener('drop', this._onGlobalDrop));
 
     // Listen for core status events from main via preload bridge
-    this.api.onCoreStatus((data) => {
+    const unsubscribe = this.api.onCoreStatus((data) => {
       const msg = data && data.message ? data.message : JSON.stringify(data);
       this.logger?.log?.(`core:status — ${msg}`);
     });
+    if (typeof unsubscribe === 'function') {
+      this.track(unsubscribe);
+    }
 
     this._syncButtons();
     this.logger?.setStatus?.('Ready');
@@ -60,8 +74,7 @@ export class AppController {
 
     this.state.setCurrentFilePath(filePath);
     this.mainView.setSelectedFile(filePath);
-    const filename = filePath ? String(filePath).split(/[/\\]/).pop() : null;
-    this.mainView.setBasicWavInfo({ filename });
+    this.mainView.setBasicWavInfo(this.wavMetadataService.toBasicInfo(filePath, null));
 
     this.logger?.log?.(`${sourceLabel} file: ${filePath}`);
     this.logger?.setStatus?.('File imported');
@@ -79,18 +92,9 @@ export class AppController {
       this.logger?.setStatus?.('Reading metadata…');
       const resp = await this.api.inspectFile(filePath);
       if (resp && resp.ok && resp.metadata) {
-        const meta = resp.metadata;
-        const filename = filePath ? String(filePath).split(/[/\\]/).pop() : null;
-        const sampleRate = typeof meta.sampleRate === 'number' ? meta.sampleRate : null;
-        const channels = typeof meta.numChannels === 'number' ? meta.numChannels : null;
-
-        let durationSec = null;
-        if (typeof meta.numSamples === 'number' && sampleRate && channels) {
-          const frames = meta.numSamples / channels;
-          durationSec = frames / sampleRate;
-        }
-
-        this.mainView.setBasicWavInfo({ filename, durationSec, sampleRate, channels });
+        this.mainView.setBasicWavInfo(
+          this.wavMetadataService.toBasicInfoFromInspect(filePath, resp)
+        );
         this.logger?.setStatus?.('Ready');
         return;
       }
@@ -117,32 +121,9 @@ export class AppController {
       if (resp && resp.ok && resp.processedPath) {
         this.state.setProcessedFilePath(resp.processedPath);
 
-        const meta = resp.metadata || null;
-        const filename = this.state.currentFilePath
-          ? String(this.state.currentFilePath).split(/[/\\]/).pop()
-          : null;
-        const sampleRate = meta && typeof meta.sampleRate === 'number' ? meta.sampleRate : null;
-        const channels = meta && typeof meta.numChannels === 'number' ? meta.numChannels : null;
-
-        let durationSec = null;
-        if (meta && typeof meta.numSamples === 'number' && sampleRate && channels) {
-          const frames = meta.numSamples / channels;
-          durationSec = frames / sampleRate;
-        } else if (
-          meta &&
-          typeof meta.subchunk2Size === 'number' &&
-          sampleRate &&
-          channels &&
-          meta.bitsPerSample
-        ) {
-          const bytesPerSample = meta.bitsPerSample / 8;
-          if (bytesPerSample > 0) {
-            const totalSamples = meta.subchunk2Size / bytesPerSample;
-            durationSec = totalSamples / (channels * sampleRate);
-          }
-        }
-
-        this.mainView.setBasicWavInfo({ filename, durationSec, sampleRate, channels });
+        this.mainView.setBasicWavInfo(
+          this.wavMetadataService.toBasicInfoFromProcess(this.state.currentFilePath, resp)
+        );
 
         this.logger?.setStatus?.('Processed');
         this.logger?.log?.(`Processing complete: ${resp.processedPath}`);

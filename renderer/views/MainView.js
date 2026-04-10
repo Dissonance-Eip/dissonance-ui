@@ -1,4 +1,6 @@
-export class MainView {
+import { BaseView } from '../base/BaseView.js';
+
+export class MainView extends BaseView {
   constructor({
     selectedFileEl,
     changeFileBtn,
@@ -10,6 +12,7 @@ export class MainView {
     metaChannelsEl,
     logger,
   }) {
+    super();
     this.selectedFileEl = selectedFileEl;
     this.changeFileBtn = changeFileBtn;
     this.processBtn = processBtn;
@@ -19,6 +22,10 @@ export class MainView {
     this.metaSampleRateEl = metaSampleRateEl;
     this.metaChannelsEl = metaChannelsEl;
     this.logger = logger;
+  }
+
+  mount() {
+    super.mount();
   }
 
   setSelectedFile(filePath) {
@@ -67,16 +74,16 @@ export class MainView {
 
   onChangeFile(cb) {
     if (!this.changeFileBtn) return;
-    this.changeFileBtn.addEventListener('click', cb);
+    this.listen(this.changeFileBtn, 'click', cb);
   }
 
   onProcess(cb) {
     if (!this.processBtn) return;
-    this.processBtn.addEventListener('click', cb);
+    this.listen(this.processBtn, 'click', cb);
   }
 
   onExport(cb) {
     if (!this.exportBtn) return;
-    this.exportBtn.addEventListener('click', cb);
+    this.listen(this.exportBtn, 'click', cb);
   }
 }
