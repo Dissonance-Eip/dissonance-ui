@@ -8,7 +8,6 @@ export class AppController extends BaseController {
     state,
     uploadView,
     analyzeView,
-    processView,
     compareView,
     exportView,
     wavMetadataService,
@@ -20,7 +19,6 @@ export class AppController extends BaseController {
     this.state = state;
     this.uploadView = uploadView;
     this.analyzeView = analyzeView;
-    this.processView = processView;
     this.compareView = compareView;
     this.exportView = exportView;
     this.wavMetadataService = wavMetadataService;
@@ -39,9 +37,6 @@ export class AppController extends BaseController {
 
     this.analyzeView.mount();
     this.track(() => this.analyzeView.unmount());
-
-    this.processView.mount();
-    this.track(() => this.processView.unmount());
 
     this.compareView.mount();
     this.track(() => this.compareView.unmount());
@@ -70,12 +65,7 @@ export class AppController extends BaseController {
       }
     });
 
-    this.analyzeView.onNext(() => {
-      if (!this.state.currentFilePath) return;
-      this._showProcess();
-    });
-
-    this.processView.onProcess(() => this.processCurrentFile());
+    this.analyzeView.onProcess(() => this.processCurrentFile());
 
     this.compareView.onNext(() => {
       if (!this.state.processedFilePath) return;
@@ -115,8 +105,8 @@ export class AppController extends BaseController {
 
     this.analyzeView.setSelectedFile(filePath);
     this.analyzeView.setBasicWavInfo(this._originalBasicInfo);
-    this.analyzeView.setNextEnabled(true);
-    this.processView.setSelectedFile(filePath);
+    this.analyzeView.setAudioPreviewFile(filePath);
+    this.analyzeView.setProcessEnabled(true);
     this.exportView.setSelectedFile(null);
 
     this.logger?.log?.(`${sourceLabel} file: ${filePath}`);
@@ -219,10 +209,9 @@ export class AppController extends BaseController {
   }
 
   _syncButtons() {
-    this.processView.setProcessEnabled(this.state.hasCurrentFile());
+    this.analyzeView.setProcessEnabled(this.state.hasCurrentFile());
     this.exportView.setExportEnabled(this.state.hasProcessedFile());
     this.compareView.setNextEnabled(this.state.hasProcessedFile());
-    this.analyzeView.setNextEnabled(this.state.hasCurrentFile());
   }
 
   _showAnalyze() {
@@ -230,29 +219,27 @@ export class AppController extends BaseController {
     this._syncButtons();
   }
 
-  _showProcess() {
-    this.router.show('process');
-    this._syncButtons();
-  }
-
   _showCompare() {
+    this.analyzeView.pauseAudioPreview();
     this.router.show('compare');
     this._syncButtons();
   }
 
   _showExport() {
+    this.analyzeView.pauseAudioPreview();
     this.exportView.setSelectedFile(this.state.processedFilePath);
     this.router.show('export');
     this._syncButtons();
   }
 
   _resetToUpload() {
+    this.analyzeView.pauseAudioPreview();
     this.state.setCurrentFilePath(null);
     this._originalBasicInfo = null;
     this._processedBasicInfo = null;
     this.analyzeView.setSelectedFile(null);
     this.analyzeView.setBasicWavInfo(null);
-    this.processView.setSelectedFile(null);
+    this.analyzeView.clearAudioPreview();
     this.compareView.setOriginalInfo(null);
     this.compareView.setProcessedInfo(null);
     this.exportView.setSelectedFile(null);

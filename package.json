@@ -17,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@arraypress/waveform-player": "^1.5.2",
     "bindings": "^1.5.0"
   },
   "devDependencies": {
