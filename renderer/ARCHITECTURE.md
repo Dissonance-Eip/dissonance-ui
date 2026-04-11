@@ -25,8 +25,7 @@ This UI is organized as a small OOP/MVC-ish structure where:
 - `renderer/views/`
   - `UploadView.js`: upload step (drop zone).
   - `AnalyzeView.js`: analyze/prepare step (metadata + waveform preview + process action).
-  - `CompareView.js`: original vs processed summary.
-  - `ExportView.js`: export step.
+  - `CompareView.js`: original vs processed summary + export action.
 - `renderer/components/`
   - `DropZone.js`: reusable drag/drop + click-to-open component.
 - `renderer/services/`

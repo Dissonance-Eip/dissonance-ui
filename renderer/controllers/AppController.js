@@ -9,7 +9,6 @@ export class AppController extends BaseController {
     uploadView,
     analyzeView,
     compareView,
-    exportView,
     wavMetadataService,
   }) {
     super();
@@ -20,7 +19,6 @@ export class AppController extends BaseController {
     this.uploadView = uploadView;
     this.analyzeView = analyzeView;
     this.compareView = compareView;
-    this.exportView = exportView;
     this.wavMetadataService = wavMetadataService;
 
     this._originalBasicInfo = null;
@@ -40,9 +38,6 @@ export class AppController extends BaseController {
 
     this.compareView.mount();
     this.track(() => this.compareView.unmount());
-
-    this.exportView.mount();
-    this.track(() => this.exportView.unmount());
 
     this.router.show('upload');
 
@@ -67,12 +62,7 @@ export class AppController extends BaseController {
 
     this.analyzeView.onProcess(() => this.processCurrentFile());
 
-    this.compareView.onNext(() => {
-      if (!this.state.processedFilePath) return;
-      this._showExport();
-    });
-
-    this.exportView.onExport(() => this.exportProcessedFile());
+    this.compareView.onExport(() => this.exportProcessedFile());
 
     // Prevent the browser/Electron from navigating to the dropped file.
     window.addEventListener('dragover', this._onGlobalDragOver);
@@ -107,7 +97,6 @@ export class AppController extends BaseController {
     this.analyzeView.setBasicWavInfo(this._originalBasicInfo);
     this.analyzeView.setAudioPreviewFile(filePath);
     this.analyzeView.setProcessEnabled(true);
-    this.exportView.setSelectedFile(null);
 
     this.logger?.log?.(`${sourceLabel} file: ${filePath}`);
     this.logger?.setStatus?.('File imported');
@@ -159,8 +148,7 @@ export class AppController extends BaseController {
 
         this.compareView.setOriginalInfo(this._originalBasicInfo);
         this.compareView.setProcessedInfo(this._processedBasicInfo);
-        this.compareView.setNextEnabled(true);
-        this.exportView.setSelectedFile(resp.processedPath);
+        this.compareView.setExportEnabled(true);
 
         this.logger?.setStatus?.('Processed');
         this.logger?.log?.(`Processing complete: ${resp.processedPath}`);
@@ -210,8 +198,7 @@ export class AppController extends BaseController {
 
   _syncButtons() {
     this.analyzeView.setProcessEnabled(this.state.hasCurrentFile());
-    this.exportView.setExportEnabled(this.state.hasProcessedFile());
-    this.compareView.setNextEnabled(this.state.hasProcessedFile());
+    this.compareView.setExportEnabled(this.state.hasProcessedFile());
   }
 
   _showAnalyze() {
@@ -225,13 +212,6 @@ export class AppController extends BaseController {
     this._syncButtons();
   }
 
-  _showExport() {
-    this.analyzeView.pauseAudioPreview();
-    this.exportView.setSelectedFile(this.state.processedFilePath);
-    this.router.show('export');
-    this._syncButtons();
-  }
-
   _resetToUpload() {
     this.analyzeView.pauseAudioPreview();
     this.state.setCurrentFilePath(null);
@@ -242,7 +222,6 @@ export class AppController extends BaseController {
     this.analyzeView.clearAudioPreview();
     this.compareView.setOriginalInfo(null);
     this.compareView.setProcessedInfo(null);
-    this.exportView.setSelectedFile(null);
     this.router.show('upload');
     this._syncButtons();
   }
