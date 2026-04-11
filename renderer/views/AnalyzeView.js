@@ -1,27 +1,23 @@
 import { BaseView } from '../base/BaseView.js';
 
-export class MainView extends BaseView {
+export class AnalyzeView extends BaseView {
   constructor({
     selectedFileEl,
     changeFileBtn,
-    processBtn,
-    exportBtn,
     metaFilenameEl,
     metaDurationEl,
     metaSampleRateEl,
     metaChannelsEl,
-    logger,
+    nextBtn,
   }) {
     super();
     this.selectedFileEl = selectedFileEl;
     this.changeFileBtn = changeFileBtn;
-    this.processBtn = processBtn;
-    this.exportBtn = exportBtn;
     this.metaFilenameEl = metaFilenameEl;
     this.metaDurationEl = metaDurationEl;
     this.metaSampleRateEl = metaSampleRateEl;
     this.metaChannelsEl = metaChannelsEl;
-    this.logger = logger;
+    this.nextBtn = nextBtn;
   }
 
   mount() {
@@ -34,7 +30,8 @@ export class MainView extends BaseView {
     this.selectedFileEl.title = filePath || '';
   }
 
-  setBasicWavInfo({ filename, durationSec, sampleRate, channels } = {}) {
+  setBasicWavInfo(basicInfo) {
+    const { filename, durationSec, sampleRate, channels } = basicInfo || {};
     if (this.metaFilenameEl) {
       this.metaFilenameEl.textContent = filename || '—';
       this.metaFilenameEl.title = filename || '';
@@ -60,16 +57,9 @@ export class MainView extends BaseView {
     }
   }
 
-  setProcessEnabled(enabled) {
-    if (!this.processBtn) return;
-    this.processBtn.disabled = !enabled;
-    this.processBtn.classList.toggle('enabled', enabled);
-  }
-
-  setExportEnabled(enabled) {
-    if (!this.exportBtn) return;
-    this.exportBtn.disabled = !enabled;
-    this.exportBtn.classList.toggle('enabled', enabled);
+  setNextEnabled(enabled) {
+    if (!this.nextBtn) return;
+    this.nextBtn.disabled = !enabled;
   }
 
   onChangeFile(cb) {
@@ -77,13 +67,8 @@ export class MainView extends BaseView {
     this.listen(this.changeFileBtn, 'click', cb);
   }
 
-  onProcess(cb) {
-    if (!this.processBtn) return;
-    this.listen(this.processBtn, 'click', cb);
-  }
-
-  onExport(cb) {
-    if (!this.exportBtn) return;
-    this.listen(this.exportBtn, 'click', cb);
+  onNext(cb) {
+    if (!this.nextBtn) return;
+    this.listen(this.nextBtn, 'click', cb);
   }
 }

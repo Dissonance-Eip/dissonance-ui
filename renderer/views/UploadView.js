@@ -1,7 +1,7 @@
 import { DropZone } from '../components/DropZone.js';
 import { BaseView } from '../base/BaseView.js';
 
-export class WelcomeView extends BaseView {
+export class UploadView extends BaseView {
   constructor({ dropZoneEl, api, logger }) {
     super();
     this.dropZone = new DropZone({ el: dropZoneEl, api, logger });

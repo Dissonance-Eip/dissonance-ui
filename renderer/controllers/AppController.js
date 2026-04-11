@@ -1,26 +1,61 @@
-export class AppController {
-  constructor({ api, logger, router, state, welcomeView, mainView }) {
+import { BaseController } from '../base/BaseController.js';
+
+export class AppController extends BaseController {
+  constructor({
+    api,
+    logger,
+    router,
+    state,
+    uploadView,
+    analyzeView,
+    processView,
+    compareView,
+    exportView,
+    wavMetadataService,
+  }) {
+    super();
     this.api = api;
     this.logger = logger;
     this.router = router;
     this.state = state;
-    this.welcomeView = welcomeView;
-    this.mainView = mainView;
+    this.uploadView = uploadView;
+    this.analyzeView = analyzeView;
+    this.processView = processView;
+    this.compareView = compareView;
+    this.exportView = exportView;
+    this.wavMetadataService = wavMetadataService;
+
+    this._originalBasicInfo = null;
+    this._processedBasicInfo = null;
 
     this._onGlobalDragOver = this._onGlobalDragOver.bind(this);
     this._onGlobalDrop = this._onGlobalDrop.bind(this);
   }
 
   start() {
-    this.welcomeView.mount();
+    super.start();
+    this.uploadView.mount();
+    this.track(() => this.uploadView.unmount());
 
-    this.router.show('welcome');
+    this.analyzeView.mount();
+    this.track(() => this.analyzeView.unmount());
 
-    this.welcomeView.onFileImported((filePath, sourceLabel) => {
+    this.processView.mount();
+    this.track(() => this.processView.unmount());
+
+    this.compareView.mount();
+    this.track(() => this.compareView.unmount());
+
+    this.exportView.mount();
+    this.track(() => this.exportView.unmount());
+
+    this.router.show('upload');
+
+    this.uploadView.onFileImported((filePath, sourceLabel) => {
       this.importFile(filePath, sourceLabel);
     });
 
-    this.mainView.onChangeFile(async () => {
+    this.analyzeView.onChangeFile(async () => {
       try {
         this.logger?.setStatus?.('Opening file dialog...');
         const filePath = await this.api.openFile();
@@ -35,18 +70,34 @@ export class AppController {
       }
     });
 
-    this.mainView.onProcess(() => this.processCurrentFile());
-    this.mainView.onExport(() => this.exportProcessedFile());
+    this.analyzeView.onNext(() => {
+      if (!this.state.currentFilePath) return;
+      this._showProcess();
+    });
+
+    this.processView.onProcess(() => this.processCurrentFile());
+
+    this.compareView.onNext(() => {
+      if (!this.state.processedFilePath) return;
+      this._showExport();
+    });
+
+    this.exportView.onExport(() => this.exportProcessedFile());
 
     // Prevent the browser/Electron from navigating to the dropped file.
     window.addEventListener('dragover', this._onGlobalDragOver);
     window.addEventListener('drop', this._onGlobalDrop);
+    this.track(() => window.removeEventListener('dragover', this._onGlobalDragOver));
+    this.track(() => window.removeEventListener('drop', this._onGlobalDrop));
 
     // Listen for core status events from main via preload bridge
-    this.api.onCoreStatus((data) => {
+    const unsubscribe = this.api.onCoreStatus((data) => {
       const msg = data && data.message ? data.message : JSON.stringify(data);
       this.logger?.log?.(`core:status — ${msg}`);
     });
+    if (typeof unsubscribe === 'function') {
+      this.track(unsubscribe);
+    }
 
     this._syncButtons();
     this.logger?.setStatus?.('Ready');
@@ -59,15 +110,19 @@ export class AppController {
     }
 
     this.state.setCurrentFilePath(filePath);
-    this.mainView.setSelectedFile(filePath);
-    const filename = filePath ? String(filePath).split(/[/\\]/).pop() : null;
-    this.mainView.setBasicWavInfo({ filename });
+    this._originalBasicInfo = this.wavMetadataService.toBasicInfo(filePath, null);
+    this._processedBasicInfo = null;
+
+    this.analyzeView.setSelectedFile(filePath);
+    this.analyzeView.setBasicWavInfo(this._originalBasicInfo);
+    this.analyzeView.setNextEnabled(true);
+    this.processView.setSelectedFile(filePath);
+    this.exportView.setSelectedFile(null);
 
     this.logger?.log?.(`${sourceLabel} file: ${filePath}`);
     this.logger?.setStatus?.('File imported');
 
-    this.router.show('main');
-    this._syncButtons();
+    this._showAnalyze();
 
     // Fetch WAV metadata immediately (does not create a processed file).
     this._inspectCurrentFile(filePath);
@@ -79,18 +134,8 @@ export class AppController {
       this.logger?.setStatus?.('Reading metadata…');
       const resp = await this.api.inspectFile(filePath);
       if (resp && resp.ok && resp.metadata) {
-        const meta = resp.metadata;
-        const filename = filePath ? String(filePath).split(/[/\\]/).pop() : null;
-        const sampleRate = typeof meta.sampleRate === 'number' ? meta.sampleRate : null;
-        const channels = typeof meta.numChannels === 'number' ? meta.numChannels : null;
-
-        let durationSec = null;
-        if (typeof meta.numSamples === 'number' && sampleRate && channels) {
-          const frames = meta.numSamples / channels;
-          durationSec = frames / sampleRate;
-        }
-
-        this.mainView.setBasicWavInfo({ filename, durationSec, sampleRate, channels });
+        this._originalBasicInfo = this.wavMetadataService.toBasicInfoFromInspect(filePath, resp);
+        this.analyzeView.setBasicWavInfo(this._originalBasicInfo);
         this.logger?.setStatus?.('Ready');
         return;
       }
@@ -117,36 +162,21 @@ export class AppController {
       if (resp && resp.ok && resp.processedPath) {
         this.state.setProcessedFilePath(resp.processedPath);
 
-        const meta = resp.metadata || null;
-        const filename = this.state.currentFilePath
-          ? String(this.state.currentFilePath).split(/[/\\]/).pop()
-          : null;
-        const sampleRate = meta && typeof meta.sampleRate === 'number' ? meta.sampleRate : null;
-        const channels = meta && typeof meta.numChannels === 'number' ? meta.numChannels : null;
+        this._processedBasicInfo = this.wavMetadataService.toBasicInfoFromProcess(
+          this.state.currentFilePath,
+          resp
+        );
 
-        let durationSec = null;
-        if (meta && typeof meta.numSamples === 'number' && sampleRate && channels) {
-          const frames = meta.numSamples / channels;
-          durationSec = frames / sampleRate;
-        } else if (
-          meta &&
-          typeof meta.subchunk2Size === 'number' &&
-          sampleRate &&
-          channels &&
-          meta.bitsPerSample
-        ) {
-          const bytesPerSample = meta.bitsPerSample / 8;
-          if (bytesPerSample > 0) {
-            const totalSamples = meta.subchunk2Size / bytesPerSample;
-            durationSec = totalSamples / (channels * sampleRate);
-          }
-        }
-
-        this.mainView.setBasicWavInfo({ filename, durationSec, sampleRate, channels });
+        this.compareView.setOriginalInfo(this._originalBasicInfo);
+        this.compareView.setProcessedInfo(this._processedBasicInfo);
+        this.compareView.setNextEnabled(true);
+        this.exportView.setSelectedFile(resp.processedPath);
 
         this.logger?.setStatus?.('Processed');
         this.logger?.log?.(`Processing complete: ${resp.processedPath}`);
         this._syncButtons();
+
+        this._showCompare();
         return;
       }
 
@@ -175,6 +205,8 @@ export class AppController {
         this._syncButtons();
         this.logger?.setStatus?.('Exported');
         this.logger?.log?.(`Exported to: ${resp.exportedPath}`);
+
+        this._resetToUpload();
         return;
       }
 
@@ -187,8 +219,45 @@ export class AppController {
   }
 
   _syncButtons() {
-    this.mainView.setProcessEnabled(this.state.hasCurrentFile());
-    this.mainView.setExportEnabled(this.state.hasProcessedFile());
+    this.processView.setProcessEnabled(this.state.hasCurrentFile());
+    this.exportView.setExportEnabled(this.state.hasProcessedFile());
+    this.compareView.setNextEnabled(this.state.hasProcessedFile());
+    this.analyzeView.setNextEnabled(this.state.hasCurrentFile());
+  }
+
+  _showAnalyze() {
+    this.router.show('analyze');
+    this._syncButtons();
+  }
+
+  _showProcess() {
+    this.router.show('process');
+    this._syncButtons();
+  }
+
+  _showCompare() {
+    this.router.show('compare');
+    this._syncButtons();
+  }
+
+  _showExport() {
+    this.exportView.setSelectedFile(this.state.processedFilePath);
+    this.router.show('export');
+    this._syncButtons();
+  }
+
+  _resetToUpload() {
+    this.state.setCurrentFilePath(null);
+    this._originalBasicInfo = null;
+    this._processedBasicInfo = null;
+    this.analyzeView.setSelectedFile(null);
+    this.analyzeView.setBasicWavInfo(null);
+    this.processView.setSelectedFile(null);
+    this.compareView.setOriginalInfo(null);
+    this.compareView.setProcessedInfo(null);
+    this.exportView.setSelectedFile(null);
+    this.router.show('upload');
+    this._syncButtons();
   }
 
   _onGlobalDragOver(e) {
@@ -204,7 +273,7 @@ export class AppController {
     if (!dt || !dt.files || dt.files.length === 0) return;
 
     const file = dt.files[0];
-    const filePath = file.path || null;
+    const filePath = this.api?.getPathForFile ? this.api.getPathForFile(file) : file.path || null;
     if (!filePath) return;
 
     this.importFile(filePath, 'Dropped');

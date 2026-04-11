@@ -1,5 +1,8 @@
-export class DropZone {
+import { BaseComponent } from '../base/BaseComponent.js';
+
+export class DropZone extends BaseComponent {
   constructor({ el, api, logger }) {
+    super();
     this.el = el;
     this.api = api;
     this.logger = logger;
@@ -12,19 +15,20 @@ export class DropZone {
   }
 
   mount() {
+    super.mount();
     if (!this.el) return;
 
-    this.el.addEventListener('click', this._onClick);
+    this.listen(this.el, 'click', this._onClick);
 
     ['dragenter', 'dragover'].forEach((evt) => {
-      this.el.addEventListener(evt, this._onDragEnterOver);
+      this.listen(this.el, evt, this._onDragEnterOver);
     });
 
     ['dragleave', 'drop'].forEach((evt) => {
-      this.el.addEventListener(evt, this._onDragLeaveDrop);
+      this.listen(this.el, evt, this._onDragLeaveDrop);
     });
 
-    this.el.addEventListener('drop', this._onDrop);
+    this.listen(this.el, 'drop', this._onDrop);
   }
 
   setOnFileSelected(cb) {
@@ -69,9 +73,10 @@ export class DropZone {
     }
 
     const file = dt.files[0];
-    const filePath = file.path || null;
+    const filePath = this.api?.getPathForFile ? this.api.getPathForFile(file) : file.path || null;
     if (!filePath) {
-      this.logger?.log('Drop: file has no path');
+      this.logger?.log('Drop: file has no path (falling back to file picker)');
+      this._onClick();
       return;
     }
 
