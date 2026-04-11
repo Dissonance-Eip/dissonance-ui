@@ -1,0 +1,58 @@
+const js = require('@eslint/js');
+const globals = require('globals');
+
+module.exports = [
+  {
+    ignores: ['build/**', 'node_modules/**'],
+  },
+  js.configs.recommended,
+  {
+    files: ['renderer/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+      },
+    },
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          caughtErrors: 'none',
+        },
+      ],
+    },
+  },
+  {
+    files: ['**/*.js'],
+    ignores: ['renderer/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          caughtErrors: 'none',
+        },
+      ],
+    },
+  },
+  {
+    files: ['renderer.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
+    },
+  },
+];

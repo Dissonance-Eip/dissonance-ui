@@ -32,4 +32,5 @@ cmake_install.cmake
 *.ninja
 *.swp
 *.swo
-
+node_modules/
+dist/

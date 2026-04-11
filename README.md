@@ -35,6 +35,7 @@ Dissonance UI is a cross-platform desktop app that helps defend audio content fr
 ---
 
 ## Tech Stack
+
 - **Frontend:** HTML, CSS, JavaScript (React planned)
 - **Desktop Packaging:** Electron
 - **Build Tools:** electron-builder
@@ -47,6 +48,7 @@ Dissonance UI is a cross-platform desktop app that helps defend audio content fr
 - **App Repo (this repo):** Electron/web app that pulls the core artifact for its functionality.
 
 ### Integration Workflow
+
 1. The core repo builds and publishes its artifact (native library or WASM) to GitHub Releases, npm, or a public URL.
 2. The app repo fetches the latest core artifact during build (using a script, npm package, or Git submodule).
 3. The Electron app loads and uses the core functionality via Node.js bindings or WASM.
@@ -56,23 +58,49 @@ Dissonance UI is a cross-platform desktop app that helps defend audio content fr
 ## Getting Started
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
+
 2. Run the app locally:
+
    ```bash
    npm start
    ```
 
 ---
 
+## Code Organization (OOP)
+
+The app is structured to be easy to extend and keep responsibilities separated:
+
+- **Main process (Electron):**
+  - `main/` contains app/window lifecycle classes.
+  - `ipcHandlers/` contains IPC registration, split by responsibility.
+  - `preload.js` exposes a minimal, explicit bridge to the renderer.
+- **Renderer process (UI):**
+  - `renderer/app/bootstrap.js` is the only composition root.
+  - `renderer/controllers/` orchestrates flows.
+  - `renderer/views/` owns DOM updates and view-level events.
+  - `renderer/components/` are reusable UI pieces.
+  - `renderer/services/` contains business logic.
+  - `renderer/infrastructure/` wraps platform/bridge concerns.
+  - `renderer/base/` provides shared lifecycle + disposal helpers.
+
+More detail: see `renderer/ARCHITECTURE.md`.
+
+---
+
 ## CI/CD
+
 - Automated builds and packaging via GitHub Actions.
 - Downloadable installers published to GitHub Releases.
 
 ---
 
 ## License & Ethics
+
 - Comply with GDPR, CCPA, and ethical data use standards
 - Share research insights and results
 - Engage transparently with the open-source and audio communities

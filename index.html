@@ -1,25 +1,171 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Dissonance Web App</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, blue, pink);
-      color: white;
-      text-align: center;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-  </style>
-</head>
-<body>
-  <h1>Welcome to Dissonance</h1>
-  <p>Protecting your audio from AI exploitation—now as a desktop web app.</p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dissonance UI (IPC demo)</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Dissonance UI</h1>
+      <p>Import an audio file, then process and export it via simulated dissonance-core.</p>
+    </header>
+    <main>
+      <section id="view-upload" class="view">
+        <div id="welcome">
+          <div id="dropZone">
+            <svg
+              class="dropZoneIcon"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M8 10L12 6L16 10"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path d="M12 6V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              <path
+                d="M5 18.5C5 17.6716 5.67157 17 6.5 17H17.5C18.3284 17 19 17.6716 19 18.5C19 19.3284 18.3284 20 17.5 20H6.5C5.67157 20 5 19.3284 5 18.5Z"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M8 4.5H6.5C5.67157 4.5 5 5.17157 5 6V7.5"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+              />
+              <path
+                d="M16 4.5H17.5C18.3284 4.5 19 5.17157 19 6V7.5"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+              />
+            </svg>
+            <div class="dropZoneText">
+              Drop an audio file here or <span class="accent">choose file</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-analyze" class="view" hidden>
+        <div class="step">
+          <h2 class="stepTitle">Analyze / Prepare</h2>
+
+          <div class="fileRow">
+            <div id="analyzeSelectedFile" class="selectedFile">No file selected</div>
+            <button id="analyzeChangeFileBtn" class="changeFileBtn" type="button">
+              Change file
+            </button>
+          </div>
+
+          <div class="metaPanel" aria-label="WAV basic info">
+            <div class="label">Filename</div>
+            <div id="analyzeMetaFilename" class="value">—</div>
+
+            <div class="label">Duration</div>
+            <div id="analyzeMetaDuration" class="value">—</div>
+
+            <div class="label">Sample rate</div>
+            <div id="analyzeMetaSampleRate" class="value">—</div>
+
+            <div class="label">Channels</div>
+            <div id="analyzeMetaChannels" class="value">—</div>
+          </div>
+
+          <div class="controls">
+            <button id="analyzeNextBtn" class="secondaryBtn" type="button" disabled>
+              Continue
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-process" class="view" hidden>
+        <div class="step">
+          <h2 class="stepTitle">Process</h2>
+
+          <div class="fileRow">
+            <div id="processSelectedFile" class="selectedFile">No file selected</div>
+          </div>
+
+          <div class="controls">
+            <button id="processBtn" class="primaryBtn processBtn" type="button" disabled>
+              Process
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-compare" class="view" hidden>
+        <div class="step">
+          <h2 class="stepTitle">Compare</h2>
+
+          <div class="panelGroup">
+            <div class="metaPanel" aria-label="Original WAV info">
+              <div class="label">Original</div>
+              <div id="compareOrigFilename" class="value">—</div>
+
+              <div class="label">Duration</div>
+              <div id="compareOrigDuration" class="value">—</div>
+
+              <div class="label">Sample rate</div>
+              <div id="compareOrigSampleRate" class="value">—</div>
+
+              <div class="label">Channels</div>
+              <div id="compareOrigChannels" class="value">—</div>
+            </div>
+
+            <div class="metaPanel" aria-label="Processed WAV info">
+              <div class="label">Processed</div>
+              <div id="compareProcFilename" class="value">—</div>
+
+              <div class="label">Duration</div>
+              <div id="compareProcDuration" class="value">—</div>
+
+              <div class="label">Sample rate</div>
+              <div id="compareProcSampleRate" class="value">—</div>
+
+              <div class="label">Channels</div>
+              <div id="compareProcChannels" class="value">—</div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="compareNextBtn" class="secondaryBtn" type="button" disabled>
+              Continue
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-export" class="view" hidden>
+        <div class="step">
+          <h2 class="stepTitle">Export</h2>
+
+          <div class="fileRow">
+            <div id="exportSelectedFile" class="selectedFile">No processed file</div>
+          </div>
+
+          <div class="controls">
+            <button id="exportBtn" class="primaryBtn exportBtn" type="button" disabled>
+              Export
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./renderer/index.js"></script>
+  </body>
 </html>
