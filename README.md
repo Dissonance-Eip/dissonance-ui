@@ -17,7 +17,6 @@ npm run dev   # or: npm start
 ```
 
 This will launch the Electron window that loads `index.html`.
-
 As we implement more issues, the UI from `.testing/` will gradually be ported into this folder (IPC, preload, audio player, etc.).
 
 ---
@@ -88,9 +87,34 @@ The app is structured to be easy to extend and keep responsibilities separated:
   - `renderer/infrastructure/` wraps platform/bridge concerns.
   - `renderer/base/` provides shared lifecycle + disposal helpers.
 
+Current main flow views:
+
+- Upload → Analyze / Prepare → Compare → Export
+
 More detail: see `renderer/ARCHITECTURE.md`.
 
 ---
+
+## Audio playback + waveform (Analyze / Prepare)
+
+The Analyze / Prepare step includes an audio preview with waveform visualization using:
+
+- `@arraypress/waveform-player`
+
+How it is integrated (no bundler):
+
+- The player is loaded from `node_modules` via `<link>` + `<script>` tags in `index.html`.
+- The renderer instantiates `window.WaveformPlayer` inside the Analyze view.
+
+Key files:
+
+- `index.html`: loads `waveform-player.css` and `waveform-player.min.js` and defines `#analyzeWaveform`.
+- `renderer/views/AnalyzeView.js`: creates/destroys the player and loads the current audio file.
+- `renderer/controllers/AppController.js`: sets/clears the preview when importing/resetting and pauses playback on navigation.
+
+Notes:
+
+- The app’s Content Security Policy allows local audio loading for preview (`media-src file:` and `connect-src file:`).
 
 ## CI/CD
 
