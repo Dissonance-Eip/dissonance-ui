@@ -23,7 +23,10 @@ This UI is organized as a small OOP/MVC-ish structure where:
 - `renderer/controllers/`
   - `AppController.js`: application orchestration.
 - `renderer/views/`
-  - `WelcomeView.js`, `MainView.js`: view-specific UI updates and event wiring.
+  - `UploadView.js`: upload step (drop zone).
+  - `AnalyzeView.js`: analyze/prepare step (metadata + waveform preview + process action).
+  - `CompareView.js`: original vs processed summary.
+  - `ExportView.js`: export step.
 - `renderer/components/`
   - `DropZone.js`: reusable drag/drop + click-to-open component.
 - `renderer/services/`
@@ -51,3 +54,11 @@ This UI is organized as a small OOP/MVC-ish structure where:
 3. Orchestrate it in a controller.
 
 Keep `renderer/app/bootstrap.js` as the only place that constructs and wires all dependencies.
+
+## Waveform playback integration
+
+The Analyze / Prepare step uses `@arraypress/waveform-player` for playback + waveform.
+
+- `index.html` loads the library assets from `node_modules` (no bundler) and provides the `#analyzeWaveform` container.
+- `AnalyzeView.js` instantiates `window.WaveformPlayer` and exposes `pauseAudioPreview()` / `clearAudioPreview()`.
+- `AppController.js` pauses the preview when leaving Analyze and clears it when resetting the flow.
