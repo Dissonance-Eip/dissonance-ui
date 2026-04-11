@@ -46,8 +46,8 @@ This UI is organized as a small OOP/MVC-ish structure where:
 
 ## Example: adding a new feature
 
-1) Add logic in a service (`renderer/services/...`).
-2) Add UI wiring in a view/component.
-3) Orchestrate it in a controller.
+1. Add logic in a service (`renderer/services/...`).
+2. Add UI wiring in a view/component.
+3. Orchestrate it in a controller.
 
 Keep `renderer/app/bootstrap.js` as the only place that constructs and wires all dependencies.

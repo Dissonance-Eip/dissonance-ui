@@ -117,7 +117,8 @@ class CoreIpcHandlers {
     });
 
     ipcMain.handle('core:inspect', async (_event, payload) => {
-      const filePath = typeof payload === 'string' ? payload : (payload && payload.filePath) || null;
+      const filePath =
+        typeof payload === 'string' ? payload : (payload && payload.filePath) || null;
 
       console.log('core:inspect called with:', { filePath });
       if (!mainWindow) return { ok: false, error: 'No main window' };
@@ -125,7 +126,10 @@ class CoreIpcHandlers {
 
       if (this.coreAddon && typeof this.coreAddon.inspect === 'function') {
         try {
-          forward(mainWindow, 'core:status', { status: 'inspecting', message: 'Reading metadata…' });
+          forward(mainWindow, 'core:status', {
+            status: 'inspecting',
+            message: 'Reading metadata…',
+          });
           const result = this.coreAddon.inspect(filePath);
           forward(mainWindow, 'core:status', { status: 'inspected', message: 'Metadata loaded' });
           return { ...(result || {}), ok: true };
@@ -152,7 +156,8 @@ class CoreIpcHandlers {
     });
 
     ipcMain.handle('core:process', async (_event, payload) => {
-      const filePath = typeof payload === 'string' ? payload : (payload && payload.filePath) || null;
+      const filePath =
+        typeof payload === 'string' ? payload : (payload && payload.filePath) || null;
       const options = (payload && payload.options) || {};
 
       console.log('core:process called with:', { filePath, options });
@@ -176,7 +181,10 @@ class CoreIpcHandlers {
           });
 
           attachAddonEventForwarding(this.coreAddon, mainWindow);
-          forward(mainWindow, 'core:status', { status: 'processing', message: 'Processing started' });
+          forward(mainWindow, 'core:status', {
+            status: 'processing',
+            message: 'Processing started',
+          });
 
           await fs.mkdir(this.tempFileManager.getRootDir(), { recursive: true });
           outputPath = this.tempFileManager.makeTempProcessedPath(filePath);
