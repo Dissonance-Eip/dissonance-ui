@@ -6,7 +6,7 @@ class MainWindowManager {
     this._window = null;
   }
 
-  createWindow({ width = 900, height = 740 } = {}) {
+  createWindow({ width = 800, height = 600 } = {}) {
     if (this._window) return this._window;
 
     this._window = new BrowserWindow({

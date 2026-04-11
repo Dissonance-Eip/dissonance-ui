@@ -5,6 +5,10 @@ export class DissonanceApi extends BaseApi {
     return this._call('openFile');
   }
 
+  getPathForFile(file) {
+    return this._call('getPathForFile', file);
+  }
+
   async getFileStats(filePath) {
     return this._call('getFileStats', filePath);
   }

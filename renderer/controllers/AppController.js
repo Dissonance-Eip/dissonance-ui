@@ -185,7 +185,7 @@ export class AppController extends BaseController {
     if (!dt || !dt.files || dt.files.length === 0) return;
 
     const file = dt.files[0];
-    const filePath = file.path || null;
+    const filePath = this.api?.getPathForFile ? this.api.getPathForFile(file) : file.path || null;
     if (!filePath) return;
 
     this.importFile(filePath, 'Dropped');

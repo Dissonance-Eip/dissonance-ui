@@ -73,9 +73,10 @@ export class DropZone extends BaseComponent {
     }
 
     const file = dt.files[0];
-    const filePath = file.path || null;
+    const filePath = this.api?.getPathForFile ? this.api.getPathForFile(file) : file.path || null;
     if (!filePath) {
-      this.logger?.log('Drop: file has no path');
+      this.logger?.log('Drop: file has no path (falling back to file picker)');
+      this._onClick();
       return;
     }
 
