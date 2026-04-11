@@ -4,6 +4,7 @@ import { ViewRouter } from '../infrastructure/ViewRouter.js';
 import { AppState } from '../state/AppState.js';
 import { UploadView } from '../views/UploadView.js';
 import { AnalyzeView } from '../views/AnalyzeView.js';
+import { ProcessView } from '../views/ProcessView.js';
 import { CompareView } from '../views/CompareView.js';
 import { ExportView } from '../views/ExportView.js';
 import { AppController } from '../controllers/AppController.js';
@@ -24,6 +25,7 @@ export function bootstrap() {
   const router = new ViewRouter({
     upload: document.getElementById('view-upload'),
     analyze: document.getElementById('view-analyze'),
+    process: document.getElementById('view-process'),
     compare: document.getElementById('view-compare'),
     export: document.getElementById('view-export'),
   });
@@ -44,7 +46,11 @@ export function bootstrap() {
     metaDurationEl: document.getElementById('analyzeMetaDuration'),
     metaSampleRateEl: document.getElementById('analyzeMetaSampleRate'),
     metaChannelsEl: document.getElementById('analyzeMetaChannels'),
-    waveformEl: document.getElementById('analyzeWaveform'),
+    nextBtn: document.getElementById('analyzeNextBtn'),
+  });
+
+  const processView = new ProcessView({
+    selectedFileEl: document.getElementById('processSelectedFile'),
     processBtn: document.getElementById('processBtn'),
   });
 
@@ -72,6 +78,7 @@ export function bootstrap() {
     state,
     uploadView,
     analyzeView,
+    processView,
     compareView,
     exportView,
     wavMetadataService,

@@ -5,21 +5,14 @@
     <title>Dissonance UI (IPC demo)</title>
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' file:; media-src 'self' file: data:;"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
     />
     <link rel="stylesheet" href="./styles.css" />
-    <link
-      rel="stylesheet"
-      href="./node_modules/@arraypress/waveform-player/dist/waveform-player.css"
-    />
   </head>
   <body>
     <header>
-      <h1>Dissonance</h1>
-      <p>
-        Import an audio file, follow the instructions, and well make sure your audio is safe from
-        unethical AI training
-      </p>
+      <h1>Dissonance UI</h1>
+      <p>Import an audio file, then process and export it via simulated dissonance-core.</p>
     </header>
     <main>
       <section id="view-upload" class="view">
@@ -91,7 +84,21 @@
             <div id="analyzeMetaChannels" class="value">—</div>
           </div>
 
-          <div id="analyzeWaveform" aria-label="Audio preview"></div>
+          <div class="controls">
+            <button id="analyzeNextBtn" class="secondaryBtn" type="button" disabled>
+              Continue
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-process" class="view" hidden>
+        <div class="step">
+          <h2 class="stepTitle">Process</h2>
+
+          <div class="fileRow">
+            <div id="processSelectedFile" class="selectedFile">No file selected</div>
+          </div>
 
           <div class="controls">
             <button id="processBtn" class="primaryBtn processBtn" type="button" disabled>
@@ -159,7 +166,6 @@
         </div>
       </section>
     </main>
-    <script src="./node_modules/@arraypress/waveform-player/dist/waveform-player.min.js"></script>
     <script type="module" src="./renderer/index.js"></script>
   </body>
 </html>

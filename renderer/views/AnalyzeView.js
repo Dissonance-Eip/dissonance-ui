@@ -8,8 +8,7 @@ export class AnalyzeView extends BaseView {
     metaDurationEl,
     metaSampleRateEl,
     metaChannelsEl,
-    waveformEl,
-    processBtn,
+    nextBtn,
   }) {
     super();
     this.selectedFileEl = selectedFileEl;
@@ -18,91 +17,11 @@ export class AnalyzeView extends BaseView {
     this.metaDurationEl = metaDurationEl;
     this.metaSampleRateEl = metaSampleRateEl;
     this.metaChannelsEl = metaChannelsEl;
-    this.waveformEl = waveformEl;
-    this.processBtn = processBtn;
-
-    this._player = null;
-    this._currentUrl = null;
+    this.nextBtn = nextBtn;
   }
 
   mount() {
     super.mount();
-    this.track(() => this.clearAudioPreview());
-  }
-
-  setAudioPreviewFile(filePath) {
-    if (!this.waveformEl) return;
-    if (!filePath) {
-      this.clearAudioPreview();
-      return;
-    }
-
-    const url = this._toFileUrl(filePath);
-    if (!url) {
-      this.clearAudioPreview();
-      return;
-    }
-
-    if (this._player && typeof this._player.loadTrack === 'function') {
-      this._currentUrl = url;
-      this._player.loadTrack(url);
-      return;
-    }
-
-    this.clearAudioPreview();
-
-    const WaveformPlayer = window.WaveformPlayer;
-    if (typeof WaveformPlayer !== 'function') {
-      return;
-    }
-
-    this._currentUrl = url;
-    // Ensure the container is empty before attaching the player.
-    this.waveformEl.innerHTML = '';
-
-    this._player = new WaveformPlayer(this.waveformEl, {
-      url,
-      waveformStyle: 'mirror',
-      height: 164,
-      showInfo: false,
-      showTime: false,
-      showBPM: false,
-      showPlaybackSpeed: false,
-      waveformColor: 'rgba(15, 23, 42, 0.25)',
-      progressColor: 'rgba(15, 23, 42, 0.9)',
-      buttonColor: 'rgba(15, 23, 42, 0.9)',
-    });
-  }
-
-  pauseAudioPreview() {
-    try {
-      this._player?.pause?.();
-    } catch (_e) {
-      // ignore
-    }
-  }
-
-  clearAudioPreview() {
-    this._currentUrl = null;
-    try {
-      this._player?.pause?.();
-      this._player?.destroy?.();
-    } catch (_e) {
-      // ignore
-    }
-    this._player = null;
-    if (this.waveformEl) {
-      this.waveformEl.innerHTML = '';
-    }
-  }
-
-  _toFileUrl(filePath) {
-    try {
-      // filePath should be an absolute path like /Users/... on macOS.
-      return new URL(`file://${filePath}`).toString();
-    } catch (_e) {
-      return null;
-    }
   }
 
   setSelectedFile(filePath) {
@@ -138,10 +57,9 @@ export class AnalyzeView extends BaseView {
     }
   }
 
-  setProcessEnabled(enabled) {
-    if (!this.processBtn) return;
-    this.processBtn.disabled = !enabled;
-    this.processBtn.classList.toggle('enabled', enabled);
+  setNextEnabled(enabled) {
+    if (!this.nextBtn) return;
+    this.nextBtn.disabled = !enabled;
   }
 
   onChangeFile(cb) {
@@ -149,8 +67,8 @@ export class AnalyzeView extends BaseView {
     this.listen(this.changeFileBtn, 'click', cb);
   }
 
-  onProcess(cb) {
-    if (!this.processBtn) return;
-    this.listen(this.processBtn, 'click', cb);
+  onNext(cb) {
+    if (!this.nextBtn) return;
+    this.listen(this.nextBtn, 'click', cb);
   }
 }
