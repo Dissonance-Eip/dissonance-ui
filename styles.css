@@ -46,14 +46,22 @@ main {
   padding: 1rem 0;
 }
 
-#mainView {
+.step {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-#controls {
+.stepTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: rgba(15, 23, 42, 0.9);
+  text-align: center;
+}
+
+.controls {
   display: flex;
   justify-content: center;
   gap: 0.75rem;
@@ -62,7 +70,7 @@ main {
   flex-wrap: wrap;
 }
 
-#metaPanel {
+.metaPanel {
   padding: 0.65rem 0.75rem;
   background: rgba(15, 23, 42, 0.04);
   border-radius: 0.5rem;
@@ -74,13 +82,13 @@ main {
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
-#metaPanel .label {
+.metaPanel .label {
   font-size: 0.85rem;
   color: rgba(15, 23, 42, 0.7);
   opacity: 0.9;
 }
 
-#metaPanel .value {
+.metaPanel .value {
   font-size: 0.85rem;
   color: #0f172a;
   overflow: hidden;
@@ -88,7 +96,7 @@ main {
   white-space: nowrap;
 }
 
-#fileRow {
+.fileRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -99,7 +107,7 @@ main {
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
-#selectedFile {
+.selectedFile {
   font-size: 0.85rem;
   color: #0f172a;
   overflow: hidden;
@@ -107,7 +115,7 @@ main {
   white-space: nowrap;
 }
 
-#changeFileBtn {
+.changeFileBtn {
   appearance: none;
   border: 1px solid rgba(15, 23, 42, 0.18);
   background: rgba(15, 23, 42, 0.04);
@@ -161,8 +169,7 @@ main {
   font-weight: 600;
 }
 
-#processBtn,
-#exportBtn {
+.primaryBtn {
   appearance: none;
   border: none;
   border-radius: 999px;
@@ -174,22 +181,49 @@ main {
   opacity: 0.6;
 }
 
-#processBtn {
+.processBtn {
   background: #facc15;
 }
 
-#exportBtn {
+.exportBtn {
   background: #6ee7b7;
 }
 
-#processBtn.enabled,
-#exportBtn.enabled {
+.primaryBtn.enabled {
   opacity: 1;
 }
 
-#processBtn:disabled,
-#exportBtn:disabled {
+.primaryBtn:disabled {
   cursor: default;
+}
+
+.secondaryBtn {
+  appearance: none;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  background: rgba(15, 23, 42, 0.04);
+  color: #0f172a;
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.secondaryBtn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.panelGroup {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 820px) {
+  .panelGroup {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 #log-container {
