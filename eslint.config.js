@@ -47,12 +47,4 @@ module.exports = [
       ],
     },
   },
-  {
-    files: ['renderer.js'],
-    languageOptions: {
-      globals: {
-        ...globals.browser,
-      },
-    },
-  },
 ];

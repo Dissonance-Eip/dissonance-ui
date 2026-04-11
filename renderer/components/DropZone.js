@@ -1,5 +1,7 @@
 import { BaseComponent } from '../base/BaseComponent.js';
 
+const DRAGOVER_CLASSES = ['border-amber-400', 'bg-amber-50'];
+
 export class DropZone extends BaseComponent {
   constructor({ el, api, logger }) {
     super();
@@ -53,13 +55,13 @@ export class DropZone extends BaseComponent {
   _onDragEnterOver(e) {
     e.preventDefault();
     e.stopPropagation();
-    this.el.classList.add('dragover');
+    this.el.classList.add(...DRAGOVER_CLASSES);
   }
 
   _onDragLeaveDrop(e) {
     e.preventDefault();
     e.stopPropagation();
-    this.el.classList.remove('dragover');
+    this.el.classList.remove(...DRAGOVER_CLASSES);
   }
 
   _onDrop(e) {

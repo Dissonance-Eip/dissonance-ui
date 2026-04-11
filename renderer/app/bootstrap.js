@@ -5,7 +5,6 @@ import { AppState } from '../state/AppState.js';
 import { UploadView } from '../views/UploadView.js';
 import { AnalyzeView } from '../views/AnalyzeView.js';
 import { CompareView } from '../views/CompareView.js';
-import { ExportView } from '../views/ExportView.js';
 import { AppController } from '../controllers/AppController.js';
 import { WavMetadataService } from '../services/WavMetadataService.js';
 
@@ -25,7 +24,6 @@ export function bootstrap() {
     upload: document.getElementById('view-upload'),
     analyze: document.getElementById('view-analyze'),
     compare: document.getElementById('view-compare'),
-    export: document.getElementById('view-export'),
   });
 
   const state = new AppState();
@@ -57,12 +55,7 @@ export function bootstrap() {
     procDurationEl: document.getElementById('compareProcDuration'),
     procSampleRateEl: document.getElementById('compareProcSampleRate'),
     procChannelsEl: document.getElementById('compareProcChannels'),
-    nextBtn: document.getElementById('compareNextBtn'),
-  });
-
-  const exportView = new ExportView({
-    selectedFileEl: document.getElementById('exportSelectedFile'),
-    exportBtn: document.getElementById('exportBtn'),
+    exportBtn: document.getElementById('compareExportBtn'),
   });
 
   const controller = new AppController({
@@ -73,7 +66,6 @@ export function bootstrap() {
     uploadView,
     analyzeView,
     compareView,
-    exportView,
     wavMetadataService,
   });
 

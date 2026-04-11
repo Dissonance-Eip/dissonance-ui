@@ -7,158 +7,188 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' file:; media-src 'self' file: data:;"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./tailwind.css" />
     <link
       rel="stylesheet"
       href="./node_modules/@arraypress/waveform-player/dist/waveform-player.css"
     />
   </head>
-  <body>
-    <header>
-      <h1>Dissonance</h1>
-      <p>
-        Import an audio file, follow the instructions, and well make sure your audio is safe from
-        unethical AI training
-      </p>
-    </header>
-    <main>
-      <section id="view-upload" class="view">
-        <div id="welcome">
-          <div id="dropZone">
-            <svg
-              class="dropZoneIcon"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
+  <body class="min-h-screen bg-white text-slate-900 antialiased">
+    <div class="min-h-screen flex flex-col">
+      <header class="px-6 py-4 text-center">
+        <h1 class="text-2xl font-semibold tracking-tight">Dissonance</h1>
+        <p class="mt-2 text-sm text-slate-600 max-w-2xl mx-auto">
+          Import an audio file, follow the instructions, and we’ll make sure your audio is safe from
+          unethical AI training
+        </p>
+      </header>
+      <main class="flex-1 flex flex-col gap-3 px-6 pb-6 box-border">
+        <section id="view-upload">
+          <div id="welcome" class="flex-1 flex flex-col items-center justify-center gap-4 py-4">
+            <div
+              id="dropZone"
+              class="w-[min(420px,90vw)] aspect-square border-2 border-dashed border-slate-300 rounded-xl p-5 text-center text-sm text-slate-700 bg-slate-50/40 cursor-pointer flex flex-col items-center justify-center gap-3"
+              role="button"
+              tabindex="0"
             >
-              <path
-                d="M8 10L12 6L16 10"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path d="M12 6V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-              <path
-                d="M5 18.5C5 17.6716 5.67157 17 6.5 17H17.5C18.3284 17 19 17.6716 19 18.5C19 19.3284 18.3284 20 17.5 20H6.5C5.67157 20 5 19.3284 5 18.5Z"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M8 4.5H6.5C5.67157 4.5 5 5.17157 5 6V7.5"
-                stroke="currentColor"
-                stroke-width="1.4"
-                stroke-linecap="round"
-              />
-              <path
-                d="M16 4.5H17.5C18.3284 4.5 19 5.17157 19 6V7.5"
-                stroke="currentColor"
-                stroke-width="1.4"
-                stroke-linecap="round"
-              />
-            </svg>
-            <div class="dropZoneText">
-              Drop an audio file here or <span class="accent">choose file</span>
+              <svg
+                class="w-20 h-20 text-slate-500"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M8 10L12 6L16 10"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M12 6V16"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M5 18.5C5 17.6716 5.67157 17 6.5 17H17.5C18.3284 17 19 17.6716 19 18.5C19 19.3284 18.3284 20 17.5 20H6.5C5.67157 20 5 19.3284 5 18.5Z"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M8 4.5H6.5C5.67157 4.5 5 5.17157 5 6V7.5"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M16 4.5H17.5C18.3284 4.5 19 5.17157 19 6V7.5"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <div class="max-w-sm leading-5">
+                Drop an audio file here or
+                <span class="font-semibold text-blue-800">choose file</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="view-analyze" class="view" hidden>
-        <div class="step">
-          <h2 class="stepTitle">Analyze / Prepare</h2>
+        <section id="view-analyze" hidden>
+          <div class="flex-1 flex flex-col gap-3">
+            <h2 class="m-0 text-center text-base font-semibold text-slate-800">
+              Analyze / Prepare
+            </h2>
 
-          <div class="fileRow">
-            <div id="analyzeSelectedFile" class="selectedFile">No file selected</div>
-            <button id="analyzeChangeFileBtn" class="changeFileBtn" type="button">
-              Change file
-            </button>
-          </div>
-
-          <div class="metaPanel" aria-label="WAV basic info">
-            <div class="label">Filename</div>
-            <div id="analyzeMetaFilename" class="value">—</div>
-
-            <div class="label">Duration</div>
-            <div id="analyzeMetaDuration" class="value">—</div>
-
-            <div class="label">Sample rate</div>
-            <div id="analyzeMetaSampleRate" class="value">—</div>
-
-            <div class="label">Channels</div>
-            <div id="analyzeMetaChannels" class="value">—</div>
-          </div>
-
-          <div id="analyzeWaveform" aria-label="Audio preview"></div>
-
-          <div class="controls">
-            <button id="processBtn" class="primaryBtn processBtn" type="button" disabled>
-              Process
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section id="view-compare" class="view" hidden>
-        <div class="step">
-          <h2 class="stepTitle">Compare</h2>
-
-          <div class="panelGroup">
-            <div class="metaPanel" aria-label="Original WAV info">
-              <div class="label">Original</div>
-              <div id="compareOrigFilename" class="value">—</div>
-
-              <div class="label">Duration</div>
-              <div id="compareOrigDuration" class="value">—</div>
-
-              <div class="label">Sample rate</div>
-              <div id="compareOrigSampleRate" class="value">—</div>
-
-              <div class="label">Channels</div>
-              <div id="compareOrigChannels" class="value">—</div>
+            <div
+              class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+            >
+              <div id="analyzeSelectedFile" class="min-w-0 flex-1 text-sm text-slate-900 truncate">
+                No file selected
+              </div>
+              <button
+                id="analyzeChangeFileBtn"
+                class="shrink-0 rounded-full border border-slate-300 bg-white/70 px-4 py-1.5 text-sm font-medium text-slate-900"
+                type="button"
+              >
+                Change file
+              </button>
             </div>
 
-            <div class="metaPanel" aria-label="Processed WAV info">
-              <div class="label">Processed</div>
-              <div id="compareProcFilename" class="value">—</div>
+            <div
+              class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+              aria-label="WAV basic info"
+            >
+              <div class="text-sm text-slate-600">Filename</div>
+              <div id="analyzeMetaFilename" class="text-sm text-slate-900 truncate">—</div>
 
-              <div class="label">Duration</div>
-              <div id="compareProcDuration" class="value">—</div>
+              <div class="text-sm text-slate-600">Duration</div>
+              <div id="analyzeMetaDuration" class="text-sm text-slate-900 truncate">—</div>
 
-              <div class="label">Sample rate</div>
-              <div id="compareProcSampleRate" class="value">—</div>
+              <div class="text-sm text-slate-600">Sample rate</div>
+              <div id="analyzeMetaSampleRate" class="text-sm text-slate-900 truncate">—</div>
 
-              <div class="label">Channels</div>
-              <div id="compareProcChannels" class="value">—</div>
+              <div class="text-sm text-slate-600">Channels</div>
+              <div id="analyzeMetaChannels" class="text-sm text-slate-900 truncate">—</div>
+            </div>
+
+            <div
+              id="analyzeWaveform"
+              class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3"
+              aria-label="Audio preview"
+            ></div>
+
+            <div class="flex justify-center gap-3 items-center flex-wrap pb-2">
+              <button
+                id="processBtn"
+                class="rounded-full px-5 py-2 text-sm font-medium bg-amber-300 text-slate-900 disabled:opacity-60 disabled:cursor-default"
+                type="button"
+                disabled
+              >
+                Process
+              </button>
             </div>
           </div>
+        </section>
 
-          <div class="controls">
-            <button id="compareNextBtn" class="secondaryBtn" type="button" disabled>
-              Continue
-            </button>
+        <section id="view-compare" hidden>
+          <div class="flex-1 flex flex-col gap-3">
+            <h2 class="m-0 text-center text-base font-semibold text-slate-800">Compare</h2>
+
+            <div class="grid grid-cols-1 gap-3 min-[820px]:grid-cols-2">
+              <div
+                class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+                aria-label="Original WAV info"
+              >
+                <div class="text-sm text-slate-600">Original</div>
+                <div id="compareOrigFilename" class="text-sm text-slate-900 truncate">—</div>
+
+                <div class="text-sm text-slate-600">Duration</div>
+                <div id="compareOrigDuration" class="text-sm text-slate-900 truncate">—</div>
+
+                <div class="text-sm text-slate-600">Sample rate</div>
+                <div id="compareOrigSampleRate" class="text-sm text-slate-900 truncate">—</div>
+
+                <div class="text-sm text-slate-600">Channels</div>
+                <div id="compareOrigChannels" class="text-sm text-slate-900 truncate">—</div>
+              </div>
+
+              <div
+                class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+                aria-label="Processed WAV info"
+              >
+                <div class="text-sm text-slate-600">Processed</div>
+                <div id="compareProcFilename" class="text-sm text-slate-900 truncate">—</div>
+
+                <div class="text-sm text-slate-600">Duration</div>
+                <div id="compareProcDuration" class="text-sm text-slate-900 truncate">—</div>
+
+                <div class="text-sm text-slate-600">Sample rate</div>
+                <div id="compareProcSampleRate" class="text-sm text-slate-900 truncate">—</div>
+
+                <div class="text-sm text-slate-600">Channels</div>
+                <div id="compareProcChannels" class="text-sm text-slate-900 truncate">—</div>
+              </div>
+            </div>
+
+            <div class="flex justify-center gap-3 items-center flex-wrap pb-2">
+              <button
+                id="compareExportBtn"
+                class="rounded-full px-5 py-2 text-sm font-medium bg-emerald-200 text-slate-900 disabled:opacity-60 disabled:cursor-default"
+                type="button"
+                disabled
+              >
+                Export
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
-
-      <section id="view-export" class="view" hidden>
-        <div class="step">
-          <h2 class="stepTitle">Export</h2>
-
-          <div class="fileRow">
-            <div id="exportSelectedFile" class="selectedFile">No processed file</div>
-          </div>
-
-          <div class="controls">
-            <button id="exportBtn" class="primaryBtn exportBtn" type="button" disabled>
-              Export
-            </button>
-          </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </div>
     <script src="./node_modules/@arraypress/waveform-player/dist/waveform-player.min.js"></script>
     <script type="module" src="./renderer/index.js"></script>
   </body>

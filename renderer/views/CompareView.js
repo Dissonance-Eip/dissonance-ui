@@ -28,7 +28,7 @@ export class CompareView extends BaseView {
     procDurationEl,
     procSampleRateEl,
     procChannelsEl,
-    nextBtn,
+    exportBtn,
   }) {
     super();
     this.origFilenameEl = origFilenameEl;
@@ -41,21 +41,21 @@ export class CompareView extends BaseView {
     this.procSampleRateEl = procSampleRateEl;
     this.procChannelsEl = procChannelsEl;
 
-    this.nextBtn = nextBtn;
+    this.exportBtn = exportBtn;
   }
 
   mount() {
     super.mount();
   }
 
-  setNextEnabled(enabled) {
-    if (!this.nextBtn) return;
-    this.nextBtn.disabled = !enabled;
+  setExportEnabled(enabled) {
+    if (!this.exportBtn) return;
+    this.exportBtn.disabled = !enabled;
   }
 
-  onNext(cb) {
-    if (!this.nextBtn) return;
-    this.listen(this.nextBtn, 'click', cb);
+  onExport(cb) {
+    if (!this.exportBtn) return;
+    this.listen(this.exportBtn, 'click', cb);
   }
 
   setOriginalInfo(basicInfo) {

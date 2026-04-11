@@ -141,7 +141,6 @@ export class AnalyzeView extends BaseView {
   setProcessEnabled(enabled) {
     if (!this.processBtn) return;
     this.processBtn.disabled = !enabled;
-    this.processBtn.classList.toggle('enabled', enabled);
   }
 
   onChangeFile(cb) {
