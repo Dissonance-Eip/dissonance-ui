@@ -93,6 +93,8 @@ export class AppController extends BaseController {
     this._originalBasicInfo = this.wavMetadataService.toBasicInfo(filePath, null);
     this._processedBasicInfo = null;
 
+    this.compareView.clearAudioPreviews?.();
+
     this.analyzeView.setSelectedFile(filePath);
     this.analyzeView.setBasicWavInfo(this._originalBasicInfo);
     this.analyzeView.setAudioPreviewFile(filePath);
@@ -148,6 +150,10 @@ export class AppController extends BaseController {
 
         this.compareView.setOriginalInfo(this._originalBasicInfo);
         this.compareView.setProcessedInfo(this._processedBasicInfo);
+        this.compareView.setAudioPreviewFiles?.({
+          originalPath: this.state.currentFilePath,
+          processedPath: this.state.processedFilePath,
+        });
         this.compareView.setExportEnabled(true);
 
         this.logger?.setStatus?.('Processed');
@@ -214,6 +220,7 @@ export class AppController extends BaseController {
 
   _resetToUpload() {
     this.analyzeView.pauseAudioPreview();
+    this.compareView.pauseAudioPreviews?.();
     this.state.setCurrentFilePath(null);
     this._originalBasicInfo = null;
     this._processedBasicInfo = null;
@@ -222,6 +229,7 @@ export class AppController extends BaseController {
     this.analyzeView.clearAudioPreview();
     this.compareView.setOriginalInfo(null);
     this.compareView.setProcessedInfo(null);
+    this.compareView.clearAudioPreviews?.();
     this.router.show('upload');
     this._syncButtons();
   }

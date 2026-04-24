@@ -24,10 +24,12 @@ export class CompareView extends BaseView {
     origDurationEl,
     origSampleRateEl,
     origChannelsEl,
+    origWaveformEl,
     procFilenameEl,
     procDurationEl,
     procSampleRateEl,
     procChannelsEl,
+    procWaveformEl,
     exportBtn,
   }) {
     super();
@@ -35,17 +37,153 @@ export class CompareView extends BaseView {
     this.origDurationEl = origDurationEl;
     this.origSampleRateEl = origSampleRateEl;
     this.origChannelsEl = origChannelsEl;
+    this.origWaveformEl = origWaveformEl;
 
     this.procFilenameEl = procFilenameEl;
     this.procDurationEl = procDurationEl;
     this.procSampleRateEl = procSampleRateEl;
     this.procChannelsEl = procChannelsEl;
+    this.procWaveformEl = procWaveformEl;
 
     this.exportBtn = exportBtn;
+
+    this._origPlayer = null;
+    this._procPlayer = null;
+    this._origUrl = null;
+    this._procUrl = null;
   }
 
   mount() {
     super.mount();
+    this.track(() => this.clearAudioPreviews());
+  }
+
+  setAudioPreviewFiles({ originalPath, processedPath }) {
+    this.setOriginalAudioPreviewFile(originalPath);
+    this.setProcessedAudioPreviewFile(processedPath);
+  }
+
+  setOriginalAudioPreviewFile(filePath) {
+    this._origUrl = null;
+    this._setAudioPreviewInto({
+      filePath,
+      el: this.origWaveformEl,
+      getPlayer: () => this._origPlayer,
+      setPlayer: (p) => {
+        this._origPlayer = p;
+      },
+      setUrl: (url) => {
+        this._origUrl = url;
+      },
+    });
+  }
+
+  setProcessedAudioPreviewFile(filePath) {
+    this._procUrl = null;
+    this._setAudioPreviewInto({
+      filePath,
+      el: this.procWaveformEl,
+      getPlayer: () => this._procPlayer,
+      setPlayer: (p) => {
+        this._procPlayer = p;
+      },
+      setUrl: (url) => {
+        this._procUrl = url;
+      },
+    });
+  }
+
+  pauseAudioPreviews() {
+    try {
+      this._origPlayer?.pause?.();
+    } catch (_e) {}
+    try {
+      this._procPlayer?.pause?.();
+    } catch (_e) {}
+  }
+
+  clearAudioPreviews() {
+    this._origUrl = null;
+    this._procUrl = null;
+
+    try {
+      this._origPlayer?.pause?.();
+      this._origPlayer?.destroy?.();
+    } catch (_e) {}
+    this._origPlayer = null;
+
+    try {
+      this._procPlayer?.pause?.();
+      this._procPlayer?.destroy?.();
+    } catch (_e) {}
+    this._procPlayer = null;
+
+    if (this.origWaveformEl) this.origWaveformEl.innerHTML = '';
+    if (this.procWaveformEl) this.procWaveformEl.innerHTML = '';
+  }
+
+  _setAudioPreviewInto({ filePath, el, getPlayer, setPlayer, setUrl }) {
+    if (!el) return;
+
+    if (!filePath) {
+      if (el) el.innerHTML = '';
+      try {
+        getPlayer()?.pause?.();
+        getPlayer()?.destroy?.();
+      } catch (_e) {}
+      setPlayer(null);
+      setUrl(null);
+      return;
+    }
+
+    const url = this._toFileUrl(filePath);
+    if (!url) {
+      if (el) el.innerHTML = '';
+      try {
+        getPlayer()?.pause?.();
+        getPlayer()?.destroy?.();
+      } catch (_e) {}
+      setPlayer(null);
+      setUrl(null);
+      return;
+    }
+
+    const existing = getPlayer();
+    if (existing && typeof existing.loadTrack === 'function') {
+      setUrl(url);
+      existing.loadTrack(url);
+      return;
+    }
+
+    const WaveformPlayer = window.WaveformPlayer;
+    if (typeof WaveformPlayer !== 'function') return;
+
+    // Ensure container empty before attaching the player.
+    el.innerHTML = '';
+    setUrl(url);
+    setPlayer(
+      new WaveformPlayer(el, {
+        url,
+        waveformStyle: 'mirror',
+        height: 140,
+        showInfo: false,
+        showTime: false,
+        showBPM: false,
+        showPlaybackSpeed: false,
+        waveformColor: 'rgba(15, 23, 42, 0.25)',
+        progressColor: 'rgba(15, 23, 42, 0.9)',
+        buttonColor: 'rgba(15, 23, 42, 0.9)',
+      })
+    );
+  }
+
+  _toFileUrl(filePath) {
+    try {
+      // filePath should be an absolute path like /Users/... on macOS.
+      return new URL(`file://${filePath}`).toString();
+    } catch (_e) {
+      return null;
+    }
   }
 
   setExportEnabled(enabled) {

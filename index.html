@@ -140,38 +140,54 @@
             <h2 class="m-0 text-center text-base font-semibold text-slate-800">Compare</h2>
 
             <div class="grid grid-cols-1 gap-3 min-[820px]:grid-cols-2">
-              <div
-                class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
-                aria-label="Original WAV info"
-              >
-                <div class="text-sm text-slate-600">Original</div>
-                <div id="compareOrigFilename" class="text-sm text-slate-900 truncate">—</div>
+              <div class="flex flex-col gap-3">
+                <div
+                  class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+                  aria-label="Original WAV info"
+                >
+                  <div class="text-sm text-slate-600">Original</div>
+                  <div id="compareOrigFilename" class="text-sm text-slate-900 truncate">—</div>
 
-                <div class="text-sm text-slate-600">Duration</div>
-                <div id="compareOrigDuration" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600">Duration</div>
+                  <div id="compareOrigDuration" class="text-sm text-slate-900 truncate">—</div>
 
-                <div class="text-sm text-slate-600">Sample rate</div>
-                <div id="compareOrigSampleRate" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600">Sample rate</div>
+                  <div id="compareOrigSampleRate" class="text-sm text-slate-900 truncate">—</div>
 
-                <div class="text-sm text-slate-600">Channels</div>
-                <div id="compareOrigChannels" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600">Channels</div>
+                  <div id="compareOrigChannels" class="text-sm text-slate-900 truncate">—</div>
+                </div>
+
+                <div
+                  id="compareOrigWaveform"
+                  class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3"
+                  aria-label="Original audio preview"
+                ></div>
               </div>
 
-              <div
-                class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
-                aria-label="Processed WAV info"
-              >
-                <div class="text-sm text-slate-600">Processed</div>
-                <div id="compareProcFilename" class="text-sm text-slate-900 truncate">—</div>
+              <div class="flex flex-col gap-3">
+                <div
+                  class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+                  aria-label="Processed WAV info"
+                >
+                  <div class="text-sm text-slate-600">Processed</div>
+                  <div id="compareProcFilename" class="text-sm text-slate-900 truncate">—</div>
 
-                <div class="text-sm text-slate-600">Duration</div>
-                <div id="compareProcDuration" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600">Duration</div>
+                  <div id="compareProcDuration" class="text-sm text-slate-900 truncate">—</div>
 
-                <div class="text-sm text-slate-600">Sample rate</div>
-                <div id="compareProcSampleRate" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600">Sample rate</div>
+                  <div id="compareProcSampleRate" class="text-sm text-slate-900 truncate">—</div>
 
-                <div class="text-sm text-slate-600">Channels</div>
-                <div id="compareProcChannels" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600">Channels</div>
+                  <div id="compareProcChannels" class="text-sm text-slate-900 truncate">—</div>
+                </div>
+
+                <div
+                  id="compareProcWaveform"
+                  class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3"
+                  aria-label="Processed audio preview"
+                ></div>
               </div>
             </div>
 
