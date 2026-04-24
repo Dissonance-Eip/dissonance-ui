@@ -51,10 +51,12 @@ export function bootstrap() {
     origDurationEl: document.getElementById('compareOrigDuration'),
     origSampleRateEl: document.getElementById('compareOrigSampleRate'),
     origChannelsEl: document.getElementById('compareOrigChannels'),
+    origWaveformEl: document.getElementById('compareOrigWaveform'),
     procFilenameEl: document.getElementById('compareProcFilename'),
     procDurationEl: document.getElementById('compareProcDuration'),
     procSampleRateEl: document.getElementById('compareProcSampleRate'),
     procChannelsEl: document.getElementById('compareProcChannels'),
+    procWaveformEl: document.getElementById('compareProcWaveform'),
     exportBtn: document.getElementById('compareExportBtn'),
   });
 
