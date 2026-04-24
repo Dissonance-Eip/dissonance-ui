@@ -9,6 +9,7 @@ export class AppController extends BaseController {
     uploadView,
     analyzeView,
     compareView,
+    headerEl,
     wavMetadataService,
   }) {
     super();
@@ -19,6 +20,7 @@ export class AppController extends BaseController {
     this.uploadView = uploadView;
     this.analyzeView = analyzeView;
     this.compareView = compareView;
+    this.headerEl = headerEl;
     this.wavMetadataService = wavMetadataService;
 
     this._originalBasicInfo = null;
@@ -40,6 +42,7 @@ export class AppController extends BaseController {
     this.track(() => this.compareView.unmount());
 
     this.router.show('upload');
+    this._setHeaderVisible(true);
 
     this.uploadView.onFileImported((filePath, sourceLabel) => {
       this.importFile(filePath, sourceLabel);
@@ -139,7 +142,11 @@ export class AppController extends BaseController {
       this.logger?.setStatus?.('Processing...');
       this.logger?.log?.('Sending processing request to dissonance-core (simulated)');
 
-      const resp = await this.api.processFile(this.state.currentFilePath);
+      const options = this.analyzeView?.getProcessingOptions
+        ? this.analyzeView.getProcessingOptions()
+        : {};
+
+      const resp = await this.api.processFile(this.state.currentFilePath, options);
       if (resp && resp.ok && resp.processedPath) {
         this.state.setProcessedFilePath(resp.processedPath);
 
@@ -209,12 +216,14 @@ export class AppController extends BaseController {
 
   _showAnalyze() {
     this.router.show('analyze');
+    this._setHeaderVisible(false);
     this._syncButtons();
   }
 
   _showCompare() {
     this.analyzeView.pauseAudioPreview();
     this.router.show('compare');
+    this._setHeaderVisible(false);
     this._syncButtons();
   }
 
@@ -231,7 +240,13 @@ export class AppController extends BaseController {
     this.compareView.setProcessedInfo(null);
     this.compareView.clearAudioPreviews?.();
     this.router.show('upload');
+    this._setHeaderVisible(true);
     this._syncButtons();
+  }
+
+  _setHeaderVisible(visible) {
+    if (!this.headerEl) return;
+    this.headerEl.hidden = !visible;
   }
 
   _onGlobalDragOver(e) {

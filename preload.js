@@ -13,7 +13,11 @@ contextBridge.exposeInMainWorld('dissonance', {
   },
   getFileStats: (filePath) => ipcRenderer.invoke('file:getStats', filePath),
   inspectFile: (filePath) => ipcRenderer.invoke('core:inspect', filePath),
-  processFile: (filePath) => ipcRenderer.invoke('core:process', filePath),
+  processFile: (filePath, options) =>
+    ipcRenderer.invoke('core:process', {
+      filePath,
+      options: options && typeof options === 'object' ? options : {},
+    }),
   exportFile: (processedPath) => ipcRenderer.invoke('core:export', processedPath),
   cleanupProcessedFile: (processedPath) =>
     ipcRenderer.invoke('core:cleanupProcessed', processedPath),
