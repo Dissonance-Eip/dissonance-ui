@@ -30,19 +30,27 @@ export class AnalyzeView extends BaseView {
 
     this._player = null;
     this._currentUrl = null;
+    this._currentFilePath = null;
+    this._themeMode = null;
+
+    this._onThemeChanged = this._onThemeChanged.bind(this);
   }
 
   mount() {
     super.mount();
     this.track(() => this.clearAudioPreview());
+    this.listen(window, 'dissonance:theme', this._onThemeChanged);
   }
 
   setAudioPreviewFile(filePath) {
     if (!this.waveformEl) return;
     if (!filePath) {
+      this._currentFilePath = null;
       this.clearAudioPreview();
       return;
     }
+
+    this._currentFilePath = filePath;
 
     const url = this._toFileUrl(filePath);
     if (!url) {
@@ -75,9 +83,7 @@ export class AnalyzeView extends BaseView {
       showTime: false,
       showBPM: false,
       showPlaybackSpeed: false,
-      waveformColor: 'rgba(15, 23, 42, 0.25)',
-      progressColor: 'rgba(15, 23, 42, 0.9)',
-      buttonColor: 'rgba(15, 23, 42, 0.9)',
+      ...this._getWaveformColors(),
     });
   }
 
@@ -101,6 +107,35 @@ export class AnalyzeView extends BaseView {
     if (this.waveformEl) {
       this.waveformEl.innerHTML = '';
     }
+  }
+
+  _getWaveformColors() {
+    const isDark = !!document?.documentElement?.classList?.contains('dark');
+    if (isDark) {
+      return {
+        waveformColor: 'rgba(226, 232, 240, 0.30)',
+        progressColor: 'rgba(226, 232, 240, 0.95)',
+        buttonColor: 'rgba(226, 232, 240, 0.95)',
+      };
+    }
+
+    return {
+      waveformColor: 'rgba(15, 23, 42, 0.25)',
+      progressColor: 'rgba(15, 23, 42, 0.9)',
+      buttonColor: 'rgba(15, 23, 42, 0.9)',
+    };
+  }
+
+  _onThemeChanged(e) {
+    const mode = e && e.detail && e.detail.mode ? String(e.detail.mode) : null;
+    if (mode && mode === this._themeMode) return;
+    this._themeMode = mode;
+
+    if (!this._player || !this._currentFilePath) return;
+
+    const filePath = this._currentFilePath;
+    this.clearAudioPreview();
+    this.setAudioPreviewFile(filePath);
   }
 
   _toFileUrl(filePath) {

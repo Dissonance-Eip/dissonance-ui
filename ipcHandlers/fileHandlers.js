@@ -9,6 +9,13 @@ function registerFileHandlers(mainWindow) {
   new UiLogForwarder().register();
   new FileDialogHandlers().register();
 
+  try {
+    const { registerThemeHandlers } = require('./themeHandlers');
+    registerThemeHandlers(mainWindow);
+  } catch (err) {
+    console.error('Failed to register theme handlers:', err);
+  }
+
   ipcMain.handle('file:getStats', async (_event, filePath) => {
     try {
       const stats = await fs.stat(filePath);

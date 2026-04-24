@@ -4,6 +4,7 @@ console.log('Preload script loaded (ui/preload.js)');
 
 contextBridge.exposeInMainWorld('dissonance', {
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
+  getSystemTheme: () => ipcRenderer.invoke('ui:getSystemTheme'),
   getPathForFile: (file) => {
     try {
       return webUtils.getPathForFile(file);
@@ -26,5 +27,10 @@ contextBridge.exposeInMainWorld('dissonance', {
     const handler = (_event, data) => cb(data);
     ipcRenderer.on('core:status', handler);
     return () => ipcRenderer.removeListener('core:status', handler);
+  },
+  onSystemTheme: (cb) => {
+    const handler = (_event, data) => cb(data);
+    ipcRenderer.on('ui:systemTheme', handler);
+    return () => ipcRenderer.removeListener('ui:systemTheme', handler);
   },
 });

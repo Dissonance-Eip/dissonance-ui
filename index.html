@@ -13,11 +13,13 @@
       href="./node_modules/@arraypress/waveform-player/dist/waveform-player.css"
     />
   </head>
-  <body class="min-h-screen bg-white text-slate-900 antialiased">
+  <body
+    class="min-h-screen bg-white text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100"
+  >
     <div class="min-h-screen flex flex-col">
       <header id="appHeader" class="px-6 py-4 text-center">
         <h1 class="text-2xl font-semibold tracking-tight">Dissonance</h1>
-        <p class="mt-2 text-sm text-slate-600 max-w-2xl mx-auto">
+        <p class="mt-2 text-sm text-slate-600 max-w-2xl mx-auto dark:text-slate-400">
           Import an audio file, follow the instructions, and we’ll make sure your audio is safe from
           unethical AI training
         </p>
@@ -27,12 +29,12 @@
           <div id="welcome" class="flex-1 flex flex-col items-center justify-center gap-4 py-4">
             <div
               id="dropZone"
-              class="w-[min(420px,90vw)] aspect-square border-2 border-dashed border-slate-300 rounded-xl p-5 text-center text-sm text-slate-700 bg-slate-50/40 cursor-pointer flex flex-col items-center justify-center gap-3"
+              class="w-[min(420px,90vw)] aspect-square border-2 border-dashed border-slate-300 rounded-xl p-5 text-center text-sm text-slate-700 bg-slate-50/40 cursor-pointer flex flex-col items-center justify-center gap-3 dark:border-slate-700 dark:text-slate-300 dark:bg-slate-900/20"
               role="button"
               tabindex="0"
             >
               <svg
-                class="w-20 h-20 text-slate-500"
+                class="w-20 h-20 text-slate-500 dark:text-slate-400"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -72,7 +74,7 @@
               </svg>
               <div class="max-w-sm leading-5">
                 Drop an audio file here or
-                <span class="font-semibold text-blue-800">choose file</span>
+                <span class="font-semibold text-blue-800 dark:text-blue-300">choose file</span>
               </div>
             </div>
           </div>
@@ -80,19 +82,22 @@
 
         <section id="view-analyze" hidden>
           <div class="flex-1 flex flex-col gap-3">
-            <h2 class="m-0 text-center text-base font-semibold text-slate-800">
+            <h2 class="m-0 text-center text-base font-semibold text-slate-800 dark:text-slate-100">
               Analyze / Prepare
             </h2>
 
             <div
-              class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+              class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/40"
             >
-              <div id="analyzeSelectedFile" class="min-w-0 flex-1 text-sm text-slate-900 truncate">
+              <div
+                id="analyzeSelectedFile"
+                class="min-w-0 flex-1 text-sm text-slate-900 truncate dark:text-slate-100"
+              >
                 No file selected
               </div>
               <button
                 id="analyzeChangeFileBtn"
-                class="shrink-0 rounded-full border border-slate-300 bg-white/70 px-4 py-1.5 text-sm font-medium text-slate-900"
+                class="shrink-0 rounded-full border border-slate-300 bg-white/70 px-4 py-1.5 text-sm font-medium text-slate-900 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100"
                 type="button"
               >
                 Change file
@@ -100,40 +105,60 @@
             </div>
 
             <div
-              class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+              class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/40"
               aria-label="WAV basic info"
             >
-              <div class="text-sm text-slate-600">Filename</div>
-              <div id="analyzeMetaFilename" class="text-sm text-slate-900 truncate">—</div>
+              <div class="text-sm text-slate-600 dark:text-slate-400">Filename</div>
+              <div
+                id="analyzeMetaFilename"
+                class="text-sm text-slate-900 truncate dark:text-slate-100"
+              >
+                —
+              </div>
 
-              <div class="text-sm text-slate-600">Duration</div>
-              <div id="analyzeMetaDuration" class="text-sm text-slate-900 truncate">—</div>
+              <div class="text-sm text-slate-600 dark:text-slate-400">Duration</div>
+              <div
+                id="analyzeMetaDuration"
+                class="text-sm text-slate-900 truncate dark:text-slate-100"
+              >
+                —
+              </div>
 
-              <div class="text-sm text-slate-600">Sample rate</div>
-              <div id="analyzeMetaSampleRate" class="text-sm text-slate-900 truncate">—</div>
+              <div class="text-sm text-slate-600 dark:text-slate-400">Sample rate</div>
+              <div
+                id="analyzeMetaSampleRate"
+                class="text-sm text-slate-900 truncate dark:text-slate-100"
+              >
+                —
+              </div>
 
-              <div class="text-sm text-slate-600">Channels</div>
-              <div id="analyzeMetaChannels" class="text-sm text-slate-900 truncate">—</div>
+              <div class="text-sm text-slate-600 dark:text-slate-400">Channels</div>
+              <div
+                id="analyzeMetaChannels"
+                class="text-sm text-slate-900 truncate dark:text-slate-100"
+              >
+                —
+              </div>
             </div>
 
             <div
               id="analyzeWaveform"
-              class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3"
+              class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
               aria-label="Audio preview"
             ></div>
 
             <section
-              class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+              class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/40"
               aria-label="Processing settings"
             >
-              <h3 class="m-0 text-sm font-semibold text-slate-800">Settings</h3>
+              <h3 class="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100">Settings</h3>
 
               <div class="mt-3 grid grid-cols-1 gap-3 min-[820px]:grid-cols-3">
                 <label class="block">
-                  <div class="text-sm text-slate-600">FFT size</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">FFT size</div>
                   <input
                     id="settingFftSize"
-                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
                     type="number"
                     inputmode="numeric"
                     placeholder="2048"
@@ -143,10 +168,10 @@
                 </label>
 
                 <label class="block">
-                  <div class="text-sm text-slate-600">Masking strength</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Masking strength</div>
                   <input
                     id="settingMaskingStrength"
-                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
                     type="number"
                     inputmode="decimal"
                     placeholder="0.50"
@@ -157,10 +182,10 @@
                 </label>
 
                 <label class="block">
-                  <div class="text-sm text-slate-600">Processing mode</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Processing mode</div>
                   <input
                     id="settingProcessingMode"
-                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
                     type="text"
                     placeholder="default"
                     autocomplete="off"
@@ -184,55 +209,97 @@
 
         <section id="view-compare" hidden>
           <div class="flex-1 flex flex-col gap-3">
-            <h2 class="m-0 text-center text-base font-semibold text-slate-800">Compare</h2>
+            <h2 class="m-0 text-center text-base font-semibold text-slate-800 dark:text-slate-100">
+              Compare
+            </h2>
 
             <div class="grid grid-cols-1 gap-3 min-[820px]:grid-cols-2">
               <div class="flex flex-col gap-3">
                 <div
-                  class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+                  class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/40"
                   aria-label="Original WAV info"
                 >
-                  <div class="text-sm text-slate-600">Original</div>
-                  <div id="compareOrigFilename" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Original</div>
+                  <div
+                    id="compareOrigFilename"
+                    class="text-sm text-slate-900 truncate dark:text-slate-100"
+                  >
+                    —
+                  </div>
 
-                  <div class="text-sm text-slate-600">Duration</div>
-                  <div id="compareOrigDuration" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Duration</div>
+                  <div
+                    id="compareOrigDuration"
+                    class="text-sm text-slate-900 truncate dark:text-slate-100"
+                  >
+                    —
+                  </div>
 
-                  <div class="text-sm text-slate-600">Sample rate</div>
-                  <div id="compareOrigSampleRate" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Sample rate</div>
+                  <div
+                    id="compareOrigSampleRate"
+                    class="text-sm text-slate-900 truncate dark:text-slate-100"
+                  >
+                    —
+                  </div>
 
-                  <div class="text-sm text-slate-600">Channels</div>
-                  <div id="compareOrigChannels" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Channels</div>
+                  <div
+                    id="compareOrigChannels"
+                    class="text-sm text-slate-900 truncate dark:text-slate-100"
+                  >
+                    —
+                  </div>
                 </div>
 
                 <div
                   id="compareOrigWaveform"
-                  class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3"
+                  class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
                   aria-label="Original audio preview"
                 ></div>
               </div>
 
               <div class="flex flex-col gap-3">
                 <div
-                  class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3"
+                  class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/40"
                   aria-label="Processed WAV info"
                 >
-                  <div class="text-sm text-slate-600">Processed</div>
-                  <div id="compareProcFilename" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Processed</div>
+                  <div
+                    id="compareProcFilename"
+                    class="text-sm text-slate-900 truncate dark:text-slate-100"
+                  >
+                    —
+                  </div>
 
-                  <div class="text-sm text-slate-600">Duration</div>
-                  <div id="compareProcDuration" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Duration</div>
+                  <div
+                    id="compareProcDuration"
+                    class="text-sm text-slate-900 truncate dark:text-slate-100"
+                  >
+                    —
+                  </div>
 
-                  <div class="text-sm text-slate-600">Sample rate</div>
-                  <div id="compareProcSampleRate" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Sample rate</div>
+                  <div
+                    id="compareProcSampleRate"
+                    class="text-sm text-slate-900 truncate dark:text-slate-100"
+                  >
+                    —
+                  </div>
 
-                  <div class="text-sm text-slate-600">Channels</div>
-                  <div id="compareProcChannels" class="text-sm text-slate-900 truncate">—</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-400">Channels</div>
+                  <div
+                    id="compareProcChannels"
+                    class="text-sm text-slate-900 truncate dark:text-slate-100"
+                  >
+                    —
+                  </div>
                 </div>
 
                 <div
                   id="compareProcWaveform"
-                  class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3"
+                  class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
                   aria-label="Processed audio preview"
                 ></div>
               </div>
