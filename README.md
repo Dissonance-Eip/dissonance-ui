@@ -2,6 +2,78 @@
 
 This folder contains the Electron shell for the Dissonance desktop app. For now it is a minimal JavaScript-only Electron project.
 
+## Tech environment (UI)
+
+### Prerequisites
+
+- **Node.js:** 20.x (matches CI)
+- **npm:** comes with Node
+
+Optional (recommended): use a Node version manager (e.g. `nvm`) so local dev matches CI.
+
+### Install
+
+```bash
+cd ui
+npm install
+```
+
+### Run (development)
+
+```bash
+npm run dev
+```
+
+Notes:
+
+- This app is **no-bundler** (plain HTML + JS modules).
+- Tailwind CSS is compiled locally via Tailwind CLI.
+  - `npm run dev` runs `predev`, which generates `tailwind.css`.
+  - While iterating on UI styling, you can run the watcher in a separate terminal:
+
+    ```bash
+    npm run watch:css
+    ```
+
+### Quality checks
+
+```bash
+npm run lint
+npm run format:check
+```
+
+### Build (packaging)
+
+```bash
+npm run build
+```
+
+`npm run build` runs `prebuild` (Tailwind) and then `electron-builder`.
+
+## Core addon (dissonance-core) integration
+
+At runtime, the main process tries to load the native core addon (a `.node` binary). The loader checks multiple candidate paths (in order) and prints the candidates to the console.
+
+- Loader: `ipcHandlers/core/CoreAddonLoader.js`
+- Default bundled location in this repo: `Build/Release/`
+- Supported bundled naming:
+  - `Build/Release/dissonance_core-${platform}-${arch}.node` (preferred)
+  - `Build/Release/dissonance_core.node` (fallback)
+
+### Override the addon path
+
+If you want to test a specific local build of the addon, set:
+
+- `DISSONANCE_CORE_ADDON_PATH=/absolute/path/to/dissonance_core.node`
+
+### Syncing the addon binaries
+
+This repo includes a GitHub Action to download the latest `.node` artifacts from the Core repo’s **latest GitHub Release** into `Build/Release/`:
+
+- Workflow: `.github/workflows/sync-core-addon.yml`
+
+If you don’t have the correct binary for your OS/arch locally, either run that workflow or manually copy the appropriate `.node` into `Build/Release/`.
+
 ## What this initial issue includes
 
 - Electron initialized with a single BrowserWindow
@@ -89,7 +161,7 @@ The app is structured to be easy to extend and keep responsibilities separated:
 
 Current main flow views:
 
-- Upload → Analyze / Prepare → Compare → Export
+- Upload → Analyze / Prepare → Compare (with Export)
 
 More detail: see `renderer/ARCHITECTURE.md`.
 
