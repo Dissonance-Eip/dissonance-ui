@@ -21,8 +21,8 @@ export class DissonanceApi extends BaseApi {
     return this._call('cleanupProcessedFile', processedPath);
   }
 
-  async processFile(filePath) {
-    return this._call('processFile', filePath);
+  async processFile(filePath, options) {
+    return this._call('processFile', filePath, options);
   }
 
   async exportFile(processedPath) {

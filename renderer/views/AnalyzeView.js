@@ -1,4 +1,5 @@
 import { BaseView } from '../base/BaseView.js';
+import { readProcessingSettings } from '../domain/ProcessingSettings.js';
 
 export class AnalyzeView extends BaseView {
   constructor({
@@ -9,6 +10,9 @@ export class AnalyzeView extends BaseView {
     metaSampleRateEl,
     metaChannelsEl,
     waveformEl,
+    settingFftSizeEl,
+    settingMaskingStrengthEl,
+    settingProcessingModeEl,
     processBtn,
   }) {
     super();
@@ -19,6 +23,9 @@ export class AnalyzeView extends BaseView {
     this.metaSampleRateEl = metaSampleRateEl;
     this.metaChannelsEl = metaChannelsEl;
     this.waveformEl = waveformEl;
+    this.settingFftSizeEl = settingFftSizeEl;
+    this.settingMaskingStrengthEl = settingMaskingStrengthEl;
+    this.settingProcessingModeEl = settingProcessingModeEl;
     this.processBtn = processBtn;
 
     this._player = null;
@@ -141,6 +148,14 @@ export class AnalyzeView extends BaseView {
   setProcessEnabled(enabled) {
     if (!this.processBtn) return;
     this.processBtn.disabled = !enabled;
+  }
+
+  getProcessingOptions() {
+    return readProcessingSettings({
+      fftSizeValue: this.settingFftSizeEl?.value,
+      maskingStrengthValue: this.settingMaskingStrengthEl?.value,
+      processingModeValue: this.settingProcessingModeEl?.value,
+    });
   }
 
   onChangeFile(cb) {

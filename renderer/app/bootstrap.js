@@ -43,6 +43,9 @@ export function bootstrap() {
     metaSampleRateEl: document.getElementById('analyzeMetaSampleRate'),
     metaChannelsEl: document.getElementById('analyzeMetaChannels'),
     waveformEl: document.getElementById('analyzeWaveform'),
+    settingFftSizeEl: document.getElementById('settingFftSize'),
+    settingMaskingStrengthEl: document.getElementById('settingMaskingStrength'),
+    settingProcessingModeEl: document.getElementById('settingProcessingMode'),
     processBtn: document.getElementById('processBtn'),
   });
 
@@ -68,6 +71,7 @@ export function bootstrap() {
     uploadView,
     analyzeView,
     compareView,
+    headerEl: document.getElementById('appHeader'),
     wavMetadataService,
   });
 
