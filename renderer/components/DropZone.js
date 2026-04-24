@@ -1,6 +1,6 @@
 import { BaseComponent } from '../base/BaseComponent.js';
 
-const DRAGOVER_CLASSES = ['border-amber-400', 'bg-amber-50'];
+const DRAGOVER_CLASSES = ['border-amber-400', 'bg-amber-50', 'dark:bg-amber-950/30'];
 
 export class DropZone extends BaseComponent {
   constructor({ el, api, logger }) {

@@ -1,6 +1,7 @@
 import { TerminalLogger } from '../infrastructure/TerminalLogger.js';
 import { DissonanceApi } from '../infrastructure/DissonanceApi.js';
 import { ViewRouter } from '../infrastructure/ViewRouter.js';
+import { SystemThemeWatcher } from '../infrastructure/SystemThemeWatcher.js';
 import { AppState } from '../state/AppState.js';
 import { UploadView } from '../views/UploadView.js';
 import { AnalyzeView } from '../views/AnalyzeView.js';
@@ -19,6 +20,9 @@ export function bootstrap() {
   }
 
   logger.log('dissonance API available from preload');
+
+  // Watch OS-level light/dark mode and apply Tailwind `dark` class.
+  new SystemThemeWatcher({ api }).start();
 
   const router = new ViewRouter({
     upload: document.getElementById('view-upload'),

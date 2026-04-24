@@ -5,6 +5,10 @@ export class DissonanceApi extends BaseApi {
     return this._call('openFile');
   }
 
+  async getSystemTheme() {
+    return this._call('getSystemTheme');
+  }
+
   getPathForFile(file) {
     return this._call('getPathForFile', file);
   }
@@ -31,5 +35,9 @@ export class DissonanceApi extends BaseApi {
 
   onCoreStatus(cb) {
     return this._call('onCoreStatus', cb);
+  }
+
+  onSystemTheme(cb) {
+    return this._call('onSystemTheme', cb);
   }
 }
