@@ -1,3 +1,8 @@
+/**
+ * Pipes renderer-side log lines back to the main-process console so they
+ * show up in the terminal you launched the app from. Listens on `ui:log`
+ * and prefixes everything with `[UI]`.
+ */
 const { ipcMain } = require('electron');
 
 class UiLogForwarder {

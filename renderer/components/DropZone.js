@@ -1,3 +1,9 @@
+/**
+ * Drag-and-drop / click-to-browse file picker component shown in UploadView.
+ * Resolves a dropped file to an absolute path via webUtils.getPathForFile()
+ * (exposed through the preload bridge) and emits it via setOnFileSelected().
+ * Falls back to the native dialog if the dropped file has no resolvable path.
+ */
 import { BaseComponent } from '../base/BaseComponent.js';
 
 const DRAGOVER_CLASSES = ['border-amber-400', 'bg-amber-50', 'dark:bg-amber-950/30'];
@@ -64,6 +70,13 @@ export class DropZone extends BaseComponent {
     this.el.classList.remove(...DRAGOVER_CLASSES);
   }
 
+  /**
+   * Browsers don't expose the absolute path of a dropped file directly —
+   * Electron's `webUtils.getPathForFile` (proxied through the preload
+   * bridge) is the only way. If that fails (e.g. on a non-Electron build,
+   * or for a synthetic drop without a backing file), fall back to opening
+   * the native file picker rather than silently dropping the gesture.
+   */
   _onDrop(e) {
     e.preventDefault();
     e.stopPropagation();

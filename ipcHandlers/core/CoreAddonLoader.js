@@ -1,3 +1,13 @@
+/**
+ * Loads the dissonance_core native addon, trying (in order):
+ *   1. DISSONANCE_CORE_ADDON_PATH env override
+ *   2. Platform-named .node in Build/Release/  (what CI ships)
+ *   3. Generic .node in Build/Release/ or build/Release/
+ *   4. The `dissonance-core` npm package
+ *   5. node-bindings fallback
+ * Returns the addon module or null. The loader never throws — call sites
+ * handle a missing addon by returning structured errors over IPC.
+ */
 const fsSync = require('fs');
 const path = require('path');
 
@@ -32,6 +42,11 @@ function getAddonCandidates() {
 }
 
 class CoreAddonLoader {
+  /**
+   * @returns {object|null} The loaded addon module, or `null` if every
+   *          candidate path failed. Never throws — IPC handlers that need
+   *          the addon check for `null` and return a structured error.
+   */
   load() {
     let coreAddon = null;
 
