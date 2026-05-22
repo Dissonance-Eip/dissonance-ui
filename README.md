@@ -101,17 +101,17 @@ The C++ core is invoked via IPC channels prefixed `core:` — see "IPC channels"
 
 ## IPC channels
 
-| Channel | Purpose |
-|---|---|
-| `dialog:openFile` | Native file picker (audio formats) |
-| `core:process` | Run the full audio pipeline on a WAV |
-| `core:readMetadata` | Read header + LIST/INFO tags without decoding audio |
-| `core:writeTags` | Rewrite the LIST/INFO chunk in place |
-| `core:export` | Save-as dialog + copy a processed temp file |
-| `core:cleanupProcessed` | Delete a tracked temp file |
-| `ui:getSystemTheme` + `ui:systemTheme` | OS light/dark sync |
-| `ui:log` | Renderer log line → main-process console |
-| `app:flushRequest` + `app:flushDone` | Quit/close coordination so pending writes finish before exit |
+| Channel                                | Purpose                                                      |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `dialog:openFile`                      | Native file picker (audio formats)                           |
+| `core:process`                         | Run the full audio pipeline on a WAV                         |
+| `core:readMetadata`                    | Read header + LIST/INFO tags without decoding audio          |
+| `core:writeTags`                       | Rewrite the LIST/INFO chunk in place                         |
+| `core:export`                          | Save-as dialog + copy a processed temp file                  |
+| `core:cleanupProcessed`                | Delete a tracked temp file                                   |
+| `ui:getSystemTheme` + `ui:systemTheme` | OS light/dark sync                                           |
+| `ui:log`                               | Renderer log line → main-process console                     |
+| `app:flushRequest` + `app:flushDone`   | Quit/close coordination so pending writes finish before exit |
 
 ---
 
