@@ -1,3 +1,18 @@
+/**
+ * Renderer composition root.
+ *
+ * Wires up the entire app on DOMContentLoaded:
+ *   - api (DissonanceApi over the preload bridge)
+ *   - logger (TerminalLogger → main process console)
+ *   - SystemThemeWatcher (Tailwind dark-mode toggle)
+ *   - ViewRouter (upload / analyze / compare)
+ *   - AppState (current + processed file paths)
+ *   - WavMetadataService (response → display-friendly shape)
+ *   - UploadView, AnalyzeView, CompareView (constructed with their DOM nodes)
+ *   - AppController.start() — registers all event handlers + flush flow
+ *
+ * Exposes the controller + logger on window for DevTools poking.
+ */
 import { TerminalLogger } from '../infrastructure/TerminalLogger.js';
 import { DissonanceApi } from '../infrastructure/DissonanceApi.js';
 import { ViewRouter } from '../infrastructure/ViewRouter.js';
@@ -42,14 +57,19 @@ export function bootstrap() {
   const analyzeView = new AnalyzeView({
     selectedFileEl: document.getElementById('analyzeSelectedFile'),
     changeFileBtn: document.getElementById('analyzeChangeFileBtn'),
-    metaFilenameEl: document.getElementById('analyzeMetaFilename'),
     metaDurationEl: document.getElementById('analyzeMetaDuration'),
     metaSampleRateEl: document.getElementById('analyzeMetaSampleRate'),
     metaChannelsEl: document.getElementById('analyzeMetaChannels'),
     waveformEl: document.getElementById('analyzeWaveform'),
-    settingFftSizeEl: document.getElementById('settingFftSize'),
-    settingMaskingStrengthEl: document.getElementById('settingMaskingStrength'),
-    settingProcessingModeEl: document.getElementById('settingProcessingMode'),
+    tagTitleEl: document.getElementById('metaTagTitle'),
+    tagArtistEl: document.getElementById('metaTagArtist'),
+    tagDateEl: document.getElementById('metaTagDate'),
+    tagGenreEl: document.getElementById('metaTagGenre'),
+    tagCommentEl: document.getElementById('metaTagComment'),
+    tagCopyrightEl: document.getElementById('metaTagCopyright'),
+    tagSoftwareEl: document.getElementById('metaTagSoftware'),
+    protectionStrengthEl: document.getElementById('protectionStrength'),
+    protectionStrengthValueEl: document.getElementById('protectionStrengthValue'),
     processBtn: document.getElementById('processBtn'),
   });
 

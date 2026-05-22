@@ -1,205 +1,198 @@
-import { BaseView } from '../base/BaseView.js';
-import { readProcessingSettings } from '../domain/ProcessingSettings.js';
+/**
+ * Second screen after a file is imported. Shows:
+ *   • the selected file name + a "Change file" button
+ *   • basic WAV info (filename, duration, sample rate, channels)
+ *   • a WaveformPreview (single player)
+ *   • the editable metadata form (title, artist, date, genre, comment,
+ *     copyright, software) — TAG_FIELDS is the single source of truth
+ *   • the Process button
+ *
+ * Pure presentational concerns only — the queue/write logic lives in
+ * AppController via onTagBlur + onPlaybackStateChange callbacks.
+ */
+import { BaseComponent } from '../base/BaseComponent.js';
+import { WaveformPreview } from '../components/WaveformPreview.js';
+import { formatDuration, formatSampleRate, formatChannels } from '../utils/wavInfoFormatters.js';
+import { basename } from '../utils/pathUtils.js';
 
-export class AnalyzeView extends BaseView {
+// Single source of truth for editable metadata fields.
+const TAG_FIELDS = ['title', 'artist', 'date', 'genre', 'comment', 'copyright', 'software'];
+
+export class AnalyzeView extends BaseComponent {
   constructor({
     selectedFileEl,
     changeFileBtn,
-    metaFilenameEl,
     metaDurationEl,
     metaSampleRateEl,
     metaChannelsEl,
     waveformEl,
-    settingFftSizeEl,
-    settingMaskingStrengthEl,
-    settingProcessingModeEl,
+    tagTitleEl,
+    tagArtistEl,
+    tagDateEl,
+    tagGenreEl,
+    tagCommentEl,
+    tagCopyrightEl,
+    tagSoftwareEl,
+    protectionStrengthEl,
+    protectionStrengthValueEl,
     processBtn,
   }) {
     super();
     this.selectedFileEl = selectedFileEl;
     this.changeFileBtn = changeFileBtn;
-    this.metaFilenameEl = metaFilenameEl;
     this.metaDurationEl = metaDurationEl;
     this.metaSampleRateEl = metaSampleRateEl;
     this.metaChannelsEl = metaChannelsEl;
-    this.waveformEl = waveformEl;
-    this.settingFftSizeEl = settingFftSizeEl;
-    this.settingMaskingStrengthEl = settingMaskingStrengthEl;
-    this.settingProcessingModeEl = settingProcessingModeEl;
+    this.protectionStrengthEl = protectionStrengthEl;
+    this.protectionStrengthValueEl = protectionStrengthValueEl;
     this.processBtn = processBtn;
 
-    this._player = null;
-    this._currentUrl = null;
-    this._currentFilePath = null;
-    this._themeMode = null;
+    // Editable tag inputs, keyed by field name.
+    this._tagEls = {
+      title: tagTitleEl,
+      artist: tagArtistEl,
+      date: tagDateEl,
+      genre: tagGenreEl,
+      comment: tagCommentEl,
+      copyright: tagCopyrightEl,
+      software: tagSoftwareEl,
+    };
 
-    this._onThemeChanged = this._onThemeChanged.bind(this);
+    this._preview = new WaveformPreview({ containerEl: waveformEl, height: 164 });
   }
 
   mount() {
     super.mount();
-    this.track(() => this.clearAudioPreview());
-    this.listen(window, 'dissonance:theme', this._onThemeChanged);
+    this._preview.mount();
+    this.track(() => this._preview.unmount());
+
+    // Live readout for the protection slider — updates as the user drags.
+    if (this.protectionStrengthEl) {
+      const updateReadout = () => {
+        if (!this.protectionStrengthValueEl) return;
+        const pct = Math.round(parseFloat(this.protectionStrengthEl.value || '0') * 100);
+        this.protectionStrengthValueEl.textContent = `${pct}%`;
+      };
+      this.listen(this.protectionStrengthEl, 'input', updateReadout);
+      updateReadout();
+    }
   }
 
+  // ---------------------------------------------------------------------------
+  // File / waveform
+  // ---------------------------------------------------------------------------
+
   setAudioPreviewFile(filePath) {
-    if (!this.waveformEl) return;
-    if (!filePath) {
-      this._currentFilePath = null;
-      this.clearAudioPreview();
-      return;
-    }
-
-    this._currentFilePath = filePath;
-
-    const url = this._toFileUrl(filePath);
-    if (!url) {
-      this.clearAudioPreview();
-      return;
-    }
-
-    if (this._player && typeof this._player.loadTrack === 'function') {
-      this._currentUrl = url;
-      this._player.loadTrack(url);
-      return;
-    }
-
-    this.clearAudioPreview();
-
-    const WaveformPlayer = window.WaveformPlayer;
-    if (typeof WaveformPlayer !== 'function') {
-      return;
-    }
-
-    this._currentUrl = url;
-    // Ensure the container is empty before attaching the player.
-    this.waveformEl.innerHTML = '';
-
-    this._player = new WaveformPlayer(this.waveformEl, {
-      url,
-      waveformStyle: 'mirror',
-      height: 164,
-      showInfo: false,
-      showTime: false,
-      showBPM: false,
-      showPlaybackSpeed: false,
-      ...this._getWaveformColors(),
-    });
+    this._preview.setFile(filePath);
   }
 
   pauseAudioPreview() {
-    try {
-      this._player?.pause?.();
-    } catch (_e) {
-      // ignore
-    }
+    this._preview.pause();
   }
 
   clearAudioPreview() {
-    this._currentUrl = null;
-    try {
-      this._player?.pause?.();
-      this._player?.destroy?.();
-    } catch (_e) {
-      // ignore
-    }
-    this._player = null;
-    if (this.waveformEl) {
-      this.waveformEl.innerHTML = '';
-    }
+    this._preview.clear();
   }
 
-  _getWaveformColors() {
-    const isDark = !!document?.documentElement?.classList?.contains('dark');
-    if (isDark) {
-      return {
-        waveformColor: 'rgba(226, 232, 240, 0.30)',
-        progressColor: 'rgba(226, 232, 240, 0.95)',
-        buttonColor: 'rgba(226, 232, 240, 0.95)',
-      };
-    }
-
-    return {
-      waveformColor: 'rgba(15, 23, 42, 0.25)',
-      progressColor: 'rgba(15, 23, 42, 0.9)',
-      buttonColor: 'rgba(15, 23, 42, 0.9)',
-    };
+  /**
+   * Forward the underlying audio element's play/pause/ended events to a
+   * callback. Delegates to WaveformPreview, which handles re-attaching after
+   * theme rebuilds (which recreate the audio element).
+   */
+  onPlaybackStateChange(cb) {
+    this._preview.setOnPlaybackStateChange(cb);
   }
 
-  _onThemeChanged(e) {
-    const mode = e && e.detail && e.detail.mode ? String(e.detail.mode) : null;
-    if (mode && mode === this._themeMode) return;
-    this._themeMode = mode;
-
-    if (!this._player || !this._currentFilePath) return;
-
-    const filePath = this._currentFilePath;
-    this.clearAudioPreview();
-    this.setAudioPreviewFile(filePath);
-  }
-
-  _toFileUrl(filePath) {
-    try {
-      // filePath should be an absolute path like /Users/... on macOS.
-      return new URL(`file://${filePath}`).toString();
-    } catch (_e) {
-      return null;
-    }
-  }
+  // ---------------------------------------------------------------------------
+  // File chip + WAV info
+  // ---------------------------------------------------------------------------
 
   setSelectedFile(filePath) {
     if (!this.selectedFileEl) return;
-    this.selectedFileEl.textContent = filePath || 'No file selected';
+    // Show only the filename; hover (`title` attr) reveals the full path.
+    this.selectedFileEl.textContent = filePath ? basename(filePath) : 'No file selected';
     this.selectedFileEl.title = filePath || '';
   }
 
+  /**
+   * Populate the info panel + (optionally) the editable tag inputs.
+   * Pass `null` or `{}` to render placeholders ("—") for the read-only
+   * fields without touching the tag inputs.
+   * @param {{filename?: string, durationSec?: number, sampleRate?: number,
+   *          channels?: number, tags?: object}|null} basicInfo
+   */
   setBasicWavInfo(basicInfo) {
-    const { filename, durationSec, sampleRate, channels } = basicInfo || {};
-    if (this.metaFilenameEl) {
-      this.metaFilenameEl.textContent = filename || '—';
-      this.metaFilenameEl.title = filename || '';
-    }
+    const { durationSec, sampleRate, channels, tags } = basicInfo || {};
 
-    if (this.metaDurationEl) {
-      if (typeof durationSec === 'number' && Number.isFinite(durationSec) && durationSec >= 0) {
-        const total = Math.round(durationSec);
-        const m = Math.floor(total / 60);
-        const s = total % 60;
-        this.metaDurationEl.textContent = `${m}:${String(s).padStart(2, '0')}`;
-      } else {
-        this.metaDurationEl.textContent = '—';
-      }
-    }
+    if (this.metaDurationEl) this.metaDurationEl.textContent = formatDuration(durationSec);
+    if (this.metaSampleRateEl) this.metaSampleRateEl.textContent = formatSampleRate(sampleRate);
+    if (this.metaChannelsEl) this.metaChannelsEl.textContent = formatChannels(channels);
 
-    if (this.metaSampleRateEl) {
-      this.metaSampleRateEl.textContent = sampleRate ? `${sampleRate} Hz` : '—';
-    }
+    if (tags) this.setMetadataTags(tags);
+  }
 
-    if (this.metaChannelsEl) {
-      this.metaChannelsEl.textContent = channels ? String(channels) : '—';
+  // ---------------------------------------------------------------------------
+  // Editable tag fields
+  // ---------------------------------------------------------------------------
+
+  setMetadataTags(tags = {}) {
+    for (const name of TAG_FIELDS) {
+      const el = this._tagEls[name];
+      if (el) el.value = tags[name] || '';
     }
+  }
+
+  /**
+   * Snapshot the current form. Always returns the full TAG_FIELDS shape,
+   * with missing inputs reported as empty strings — so writeTags receives
+   * a complete tag set every time and can drop empty fields cleanly.
+   */
+  getMetadataTags() {
+    const out = {};
+    for (const name of TAG_FIELDS) {
+      const el = this._tagEls[name];
+      out[name] = el ? el.value.trim() : '';
+    }
+    return out;
+  }
+
+  /**
+   * Fire `cb(tags)` every time the user finishes editing a field.
+   * The controller decides whether to write immediately, queue, or block
+   * (via TagWriteQueue) — this view just reports the event.
+   */
+  onTagBlur(cb) {
+    for (const name of TAG_FIELDS) {
+      const el = this._tagEls[name];
+      if (!el) continue;
+      this.listen(el, 'blur', () => cb(this.getMetadataTags()));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Buttons
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Read the current protection strength as a float in [0, 1].
+   * Falls back to 0.5 (the core's default) if the input is missing or NaN.
+   */
+  getProtectionStrength() {
+    const raw = this.protectionStrengthEl ? parseFloat(this.protectionStrengthEl.value) : NaN;
+    if (!Number.isFinite(raw)) return 0.5;
+    return Math.min(1, Math.max(0, raw));
   }
 
   setProcessEnabled(enabled) {
-    if (!this.processBtn) return;
-    this.processBtn.disabled = !enabled;
-  }
-
-  getProcessingOptions() {
-    return readProcessingSettings({
-      fftSizeValue: this.settingFftSizeEl?.value,
-      maskingStrengthValue: this.settingMaskingStrengthEl?.value,
-      processingModeValue: this.settingProcessingModeEl?.value,
-    });
+    if (this.processBtn) this.processBtn.disabled = !enabled;
+    if (this.protectionStrengthEl) this.protectionStrengthEl.disabled = !enabled;
   }
 
   onChangeFile(cb) {
-    if (!this.changeFileBtn) return;
-    this.listen(this.changeFileBtn, 'click', cb);
+    if (this.changeFileBtn) this.listen(this.changeFileBtn, 'click', cb);
   }
 
   onProcess(cb) {
-    if (!this.processBtn) return;
-    this.listen(this.processBtn, 'click', cb);
+    if (this.processBtn) this.listen(this.processBtn, 'click', cb);
   }
 }

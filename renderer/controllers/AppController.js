@@ -1,4 +1,20 @@
+/**
+ * Top-level renderer controller — owns the three-view flow and the
+ * TagWriteQueue. start() wires every event the app reacts to:
+ *
+ *   • upload / drop → importFile → analyze view
+ *   • change file → re-open dialog → importFile
+ *   • tag blur → enqueue write (queue defers while audio plays)
+ *   • playback play/pause → toggle queue blocked state
+ *   • process → flush queue → core processes → tag the output → compare view
+ *   • export → copy temp to user location → reset to upload
+ *   • quit flush request → pause, snapshot form, drain, notify main
+ *
+ * _pauseAndFlushTags() is the single chokepoint used by importFile,
+ * processCurrentFile, and the quit handler; see its comment.
+ */
 import { BaseController } from '../base/BaseController.js';
+import { TagWriteQueue } from '../services/TagWriteQueue.js';
 
 export class AppController extends BaseController {
   constructor({
@@ -25,6 +41,13 @@ export class AppController extends BaseController {
 
     this._originalBasicInfo = null;
     this._processedBasicInfo = null;
+
+    // Serialised, blockable queue for auto-saving tag edits. Blocked while
+    // the audio element is streaming a file; flushed on quit.
+    this._tagQueue = new TagWriteQueue({
+      writeFn: (filePath, tags) => this.api.writeTags(filePath, tags),
+      onError: (err) => this.logger?.log?.(`Auto-save tags failed: ${err}`),
+    });
 
     this._onGlobalDragOver = this._onGlobalDragOver.bind(this);
     this._onGlobalDrop = this._onGlobalDrop.bind(this);
@@ -65,7 +88,27 @@ export class AppController extends BaseController {
 
     this.analyzeView.onProcess(() => this.processCurrentFile());
 
+    // Each blur snapshots the current tags + file path into the queue.
+    // The queue defers the write while audio is playing (see below) and
+    // serialises writes so concurrent calls can't corrupt the file.
+    this.analyzeView.onTagBlur((tags) => {
+      const filePath = this.state.currentFilePath;
+      if (filePath) this._tagQueue.enqueue(filePath, tags);
+    });
+
+    // Block the queue while audio is playing, unblock on pause/end so any
+    // queued snapshot flushes immediately when the user stops playback.
+    this.analyzeView.onPlaybackStateChange((isPlaying) => {
+      this._tagQueue.setBlocked(isPlaying);
+    });
+
     this.compareView.onExport(() => this.exportProcessedFile());
+
+    // Before the app quits: pause playback, drain the queue, signal main.
+    window.dissonance.onAppFlushRequest(async () => {
+      await this._pauseAndFlushTags();
+      window.dissonance.notifyFlushDone();
+    });
 
     // Prevent the browser/Electron from navigating to the dropped file.
     window.addEventListener('dragover', this._onGlobalDragOver);
@@ -86,7 +129,17 @@ export class AppController extends BaseController {
     this.logger?.setStatus?.('Ready');
   }
 
-  importFile(filePath, sourceLabel) {
+  /**
+   * Handle a new source file selected by the user (dropped or picked).
+   * @param {string} filePath       absolute path of the WAV
+   * @param {string} sourceLabel    'Dropped' or 'Selected' — for logging only
+   */
+  async importFile(filePath, sourceLabel) {
+    // Capture any tag edits for the OLD file and flush them safely before we
+    // touch anything. Also waits for in-flight writes so readMetadata below
+    // sees fresh values (matters when reimporting the same file).
+    await this._pauseAndFlushTags();
+
     if (this.state.processedFilePath) {
       // Best-effort cleanup of the previous processed temp file.
       this.api.cleanupProcessedFile(this.state.processedFilePath).catch(() => {});
@@ -108,25 +161,23 @@ export class AppController extends BaseController {
 
     this._showAnalyze();
 
-    // Fetch WAV metadata immediately (does not create a processed file).
-    this._inspectCurrentFile(filePath);
+    // Read WAV metadata immediately so the user can view and edit fields before processing.
+    this._readFileMetadata(filePath);
   }
 
-  async _inspectCurrentFile(filePath) {
+  async _readFileMetadata(filePath) {
     if (!filePath) return;
     try {
       this.logger?.setStatus?.('Reading metadata…');
-      const resp = await this.api.inspectFile(filePath);
-      if (resp && resp.ok && resp.metadata) {
-        this._originalBasicInfo = this.wavMetadataService.toBasicInfoFromInspect(filePath, resp);
+      const resp = await this.api.readFileMetadata(filePath);
+      if (resp && resp.ok && resp.audio) {
+        this._originalBasicInfo = this.wavMetadataService.toBasicInfoFromMetadata(filePath, resp);
         this.analyzeView.setBasicWavInfo(this._originalBasicInfo);
         this.logger?.setStatus?.('Ready');
         return;
       }
-
       const errMsg = resp && resp.error ? resp.error : 'Unknown error';
       this.logger?.setStatus?.(`Metadata failed: ${errMsg}`, true);
-      this.logger?.log?.(`Metadata failed: ${errMsg}`);
     } catch (err) {
       this.logger?.error?.(`Metadata failed: ${err}`);
     }
@@ -140,19 +191,26 @@ export class AppController extends BaseController {
 
     try {
       this.logger?.setStatus?.('Processing...');
-      this.logger?.log?.('Sending processing request to dissonance-core (simulated)');
+      this.logger?.log?.('Sending processing request to dissonance-core');
 
-      const options = this.analyzeView?.getProcessingOptions
-        ? this.analyzeView.getProcessingOptions()
-        : {};
+      // Pause playback + capture any unsaved tag edits + drain the queue
+      // before the core reads the input file.
+      await this._pauseAndFlushTags();
 
-      const resp = await this.api.processFile(this.state.currentFilePath, options);
+      const perturbation = this.analyzeView.getProtectionStrength();
+      const resp = await this.api.processFile(this.state.currentFilePath, { perturbation });
       if (resp && resp.ok && resp.processedPath) {
+        // Write the user's edited metadata tags into the processed file.
+        const editedTags = this.analyzeView.getMetadataTags?.() ?? {};
+        this._tagQueue.enqueue(resp.processedPath, editedTags);
+        await this._tagQueue.flush();
+
         this.state.setProcessedFilePath(resp.processedPath);
 
-        this._processedBasicInfo = this.wavMetadataService.toBasicInfoFromProcess(
-          this.state.currentFilePath,
-          resp
+        const processedMeta = await this.api.readFileMetadata(resp.processedPath).catch(() => null);
+        this._processedBasicInfo = this.wavMetadataService.toBasicInfoFromMetadata(
+          resp.processedPath,
+          processedMeta && processedMeta.ok ? processedMeta : {}
         );
 
         this.compareView.setOriginalInfo(this._originalBasicInfo);
@@ -212,6 +270,29 @@ export class AppController extends BaseController {
   _syncButtons() {
     this.analyzeView.setProcessEnabled(this.state.hasCurrentFile());
     this.compareView.setExportEnabled(this.state.hasProcessedFile());
+  }
+
+  /**
+   * Safe-flush the tag queue:
+   *   1. Pause every audio preview (analyze + both compare players) so no
+   *      audio element is streaming the file we're about to rewrite.
+   *   2. Snapshot the current form into the queue for the current file path
+   *      so any tag edit that didn't fire blur (native dialog stealing focus,
+   *      Cmd+Q with focus in an input, clicking Process from an input, etc.)
+   *      is captured.
+   *   3. Await the queue draining all pending + in-flight writes.
+   *
+   * Called from importFile, processCurrentFile, and the quit flush handler.
+   */
+  async _pauseAndFlushTags() {
+    this.analyzeView.pauseAudioPreview();
+    this.compareView.pauseAudioPreviews?.();
+
+    if (this.state.currentFilePath) {
+      this._tagQueue.enqueue(this.state.currentFilePath, this.analyzeView.getMetadataTags());
+    }
+
+    await this._tagQueue.flush();
   }
 
   _showAnalyze() {
