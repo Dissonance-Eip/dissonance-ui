@@ -197,8 +197,11 @@ export class AppController extends BaseController {
       // before the core reads the input file.
       await this._pauseAndFlushTags();
 
-      const perturbation = this.analyzeView.getProtectionStrength();
-      const resp = await this.api.processFile(this.state.currentFilePath, { perturbation });
+      const modes = this.analyzeView.getProcessingModes?.() ?? [];
+      const options = modes.length
+        ? { modes }
+        : { perturbation: this.analyzeView.getProtectionStrength() };
+      const resp = await this.api.processFile(this.state.currentFilePath, options);
       if (resp && resp.ok && resp.processedPath) {
         // Write the user's edited metadata tags into the processed file.
         const editedTags = this.analyzeView.getMetadataTags?.() ?? {};

@@ -35,6 +35,8 @@ export class AnalyzeView extends BaseComponent {
     tagSoftwareEl,
     protectionStrengthEl,
     protectionStrengthValueEl,
+    processingModeEls,
+    processingModeLabelEl,
     processBtn,
   }) {
     super();
@@ -45,7 +47,10 @@ export class AnalyzeView extends BaseComponent {
     this.metaChannelsEl = metaChannelsEl;
     this.protectionStrengthEl = protectionStrengthEl;
     this.protectionStrengthValueEl = protectionStrengthValueEl;
+    this.processingModeEls = Array.from(processingModeEls || []);
+    this.processingModeLabelEl = processingModeLabelEl;
     this.processBtn = processBtn;
+    this._processEnabled = false;
 
     // Editable tag inputs, keyed by field name.
     this._tagEls = {
@@ -75,6 +80,12 @@ export class AnalyzeView extends BaseComponent {
       };
       this.listen(this.protectionStrengthEl, 'input', updateReadout);
       updateReadout();
+    }
+
+    if (this.processingModeEls.length > 0) {
+      const sync = () => this._syncProcessingControls();
+      this.processingModeEls.forEach((el) => this.listen(el, 'change', sync));
+      this._syncProcessingControls();
     }
   }
 
@@ -183,9 +194,14 @@ export class AnalyzeView extends BaseComponent {
     return Math.min(1, Math.max(0, raw));
   }
 
+  getProcessingModes() {
+    return this.processingModeEls.filter((el) => el.checked).map((el) => el.value);
+  }
+
   setProcessEnabled(enabled) {
+    this._processEnabled = Boolean(enabled);
     if (this.processBtn) this.processBtn.disabled = !enabled;
-    if (this.protectionStrengthEl) this.protectionStrengthEl.disabled = !enabled;
+    this._syncProcessingControls();
   }
 
   onChangeFile(cb) {
@@ -194,5 +210,29 @@ export class AnalyzeView extends BaseComponent {
 
   onProcess(cb) {
     if (this.processBtn) this.listen(this.processBtn, 'click', cb);
+  }
+
+  _getSelectedModeLabels() {
+    return this.processingModeEls
+      .filter((el) => el.checked)
+      .map((el) => el.getAttribute('data-label') || el.value);
+  }
+
+  _syncProcessingControls() {
+    const selectedLabels = this._getSelectedModeLabels();
+    if (this.processingModeLabelEl) {
+      if (selectedLabels.length === 0) {
+        this.processingModeLabelEl.textContent = 'Select modes';
+      } else if (selectedLabels.length === 1) {
+        this.processingModeLabelEl.textContent = selectedLabels[0];
+      } else {
+        this.processingModeLabelEl.textContent = `${selectedLabels.length} selected`;
+      }
+    }
+
+    const hasModes = selectedLabels.length > 0;
+    if (this.protectionStrengthEl) {
+      this.protectionStrengthEl.disabled = !this._processEnabled || hasModes;
+    }
   }
 }
