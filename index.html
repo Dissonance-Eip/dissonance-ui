@@ -81,17 +81,18 @@
         </section>
 
         <section id="view-analyze" hidden>
-          <div class="flex-1 flex flex-col gap-3">
+          <div class="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center gap-3 py-6">
             <h2 class="m-0 text-center text-base font-semibold text-slate-800 dark:text-slate-100">
-              Analyze / Prepare
+              Analyze
             </h2>
 
+            <!-- FULL WIDTH: file chip -->
             <div
               class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/40"
             >
               <div
                 id="analyzeSelectedFile"
-                class="min-w-0 flex-1 text-sm text-slate-900 truncate dark:text-slate-100"
+                class="min-w-0 flex-1 truncate text-sm text-slate-900 dark:text-slate-100"
               >
                 No file selected
               </div>
@@ -104,106 +105,175 @@
               </button>
             </div>
 
+            <!-- FULL WIDTH: compact horizontal info row -->
             <div
-              class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/40"
+              class="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/40"
               aria-label="WAV basic info"
             >
-              <div class="text-sm text-slate-600 dark:text-slate-400">Filename</div>
-              <div
-                id="analyzeMetaFilename"
-                class="text-sm text-slate-900 truncate dark:text-slate-100"
-              >
-                —
+              <div class="flex items-center gap-2">
+                <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  >Duration</span
+                >
+                <span id="analyzeMetaDuration" class="text-sm text-slate-900 dark:text-slate-100"
+                  >—</span
+                >
               </div>
-
-              <div class="text-sm text-slate-600 dark:text-slate-400">Duration</div>
-              <div
-                id="analyzeMetaDuration"
-                class="text-sm text-slate-900 truncate dark:text-slate-100"
-              >
-                —
+              <div class="flex items-center gap-2">
+                <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  >Sample rate</span
+                >
+                <span id="analyzeMetaSampleRate" class="text-sm text-slate-900 dark:text-slate-100"
+                  >—</span
+                >
               </div>
-
-              <div class="text-sm text-slate-600 dark:text-slate-400">Sample rate</div>
-              <div
-                id="analyzeMetaSampleRate"
-                class="text-sm text-slate-900 truncate dark:text-slate-100"
-              >
-                —
-              </div>
-
-              <div class="text-sm text-slate-600 dark:text-slate-400">Channels</div>
-              <div
-                id="analyzeMetaChannels"
-                class="text-sm text-slate-900 truncate dark:text-slate-100"
-              >
-                —
+              <div class="flex items-center gap-2">
+                <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  >Channels</span
+                >
+                <span id="analyzeMetaChannels" class="text-sm text-slate-900 dark:text-slate-100"
+                  >—</span
+                >
               </div>
             </div>
 
+            <!-- FULL WIDTH: waveform -->
             <div
               id="analyzeWaveform"
-              class="min-h-[200px] rounded-lg border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
+              class="min-h-[200px] rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/40"
               aria-label="Audio preview"
             ></div>
 
-            <section
-              class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/40"
-              aria-label="Processing settings"
-            >
-              <h3 class="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100">Settings</h3>
+            <!-- TWO COLUMNS: metadata | protection + process -->
+            <div class="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
+              <section
+                class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/40"
+                aria-label="File metadata"
+              >
+                <h3 class="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Metadata
+                </h3>
 
-              <div class="mt-3 grid grid-cols-1 gap-3 min-[820px]:grid-cols-3">
-                <label class="block">
-                  <div class="text-sm text-slate-600 dark:text-slate-400">FFT size</div>
-                  <input
-                    id="settingFftSize"
-                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
-                    type="number"
-                    inputmode="numeric"
-                    placeholder="2048"
-                    min="1"
-                    step="1"
-                  />
-                </label>
+                <div class="mt-3 grid grid-cols-1 gap-3 min-[820px]:grid-cols-2">
+                  <label class="block">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Title</div>
+                    <input
+                      id="metaTagTitle"
+                      class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      type="text"
+                      placeholder="—"
+                      autocomplete="off"
+                    />
+                  </label>
 
-                <label class="block">
-                  <div class="text-sm text-slate-600 dark:text-slate-400">Masking strength</div>
+                  <label class="block">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Artist</div>
+                    <input
+                      id="metaTagArtist"
+                      class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      type="text"
+                      placeholder="—"
+                      autocomplete="off"
+                    />
+                  </label>
+
+                  <label class="block">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Date</div>
+                    <input
+                      id="metaTagDate"
+                      class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      type="text"
+                      placeholder="—"
+                      autocomplete="off"
+                    />
+                  </label>
+
+                  <label class="block">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Genre</div>
+                    <input
+                      id="metaTagGenre"
+                      class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      type="text"
+                      placeholder="—"
+                      autocomplete="off"
+                    />
+                  </label>
+
+                  <label class="block min-[820px]:col-span-2">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Comment</div>
+                    <input
+                      id="metaTagComment"
+                      class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      type="text"
+                      placeholder="—"
+                      autocomplete="off"
+                    />
+                  </label>
+
+                  <label class="block">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Copyright</div>
+                    <input
+                      id="metaTagCopyright"
+                      class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      type="text"
+                      placeholder="—"
+                      autocomplete="off"
+                    />
+                  </label>
+
+                  <label class="block">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Software</div>
+                    <input
+                      id="metaTagSoftware"
+                      class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      type="text"
+                      placeholder="—"
+                      autocomplete="off"
+                    />
+                  </label>
+                </div>
+              </section>
+
+              <!-- Right side: protection slider + process button -->
+              <div
+                class="flex flex-col justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/40"
+              >
+                <section aria-label="Protection settings">
+                  <div class="flex items-center justify-between">
+                    <h3 class="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      Protection
+                    </h3>
+                    <span
+                      id="protectionStrengthValue"
+                      class="text-sm tabular-nums text-slate-600 dark:text-slate-400"
+                    >
+                      50%
+                    </span>
+                  </div>
                   <input
-                    id="settingMaskingStrength"
-                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
-                    type="number"
-                    inputmode="decimal"
-                    placeholder="0.50"
+                    id="protectionStrength"
+                    class="mt-3 w-full accent-amber-400"
+                    type="range"
                     min="0"
                     max="1"
-                    step="0.05"
+                    step="0.01"
+                    value="0.5"
+                    aria-label="Protection strength"
                   />
-                </label>
+                </section>
 
-                <label class="block">
-                  <div class="text-sm text-slate-600 dark:text-slate-400">Processing mode</div>
-                  <input
-                    id="settingProcessingMode"
-                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
-                    type="text"
-                    placeholder="default"
-                    autocomplete="off"
-                  />
-                </label>
+                <div class="flex items-center justify-center">
+                  <button
+                    id="processBtn"
+                    class="rounded-full bg-amber-300 px-6 py-2.5 text-sm font-medium text-slate-900 disabled:cursor-default disabled:opacity-60"
+                    type="button"
+                    disabled
+                  >
+                    Process
+                  </button>
+                </div>
               </div>
-            </section>
-
-            <div class="flex justify-center gap-3 items-center flex-wrap pb-2">
-              <button
-                id="processBtn"
-                class="rounded-full px-5 py-2 text-sm font-medium bg-amber-300 text-slate-900 disabled:opacity-60 disabled:cursor-default"
-                type="button"
-                disabled
-              >
-                Process
-              </button>
             </div>
+            <!-- /two-column -->
           </div>
         </section>
 

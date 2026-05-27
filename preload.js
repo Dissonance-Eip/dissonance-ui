@@ -1,3 +1,14 @@
+/**
+ * Preload script — bridges the sandboxed renderer to the main process.
+ *
+ * Everything the renderer can ask the OS / native code to do goes through
+ * `window.dissonance.*` exposed here via contextBridge. Each method maps to
+ * an ipcRenderer.invoke (request/response) or ipcRenderer.on (subscription
+ * with an unsubscribe function returned).
+ *
+ * SECURITY: contextIsolation is on; node integration is off. The renderer
+ * never sees `require`, `process`, or any Node API directly.
+ */
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 console.log('Preload script loaded (ui/preload.js)');
@@ -12,16 +23,18 @@ contextBridge.exposeInMainWorld('dissonance', {
       return null;
     }
   },
-  getFileStats: (filePath) => ipcRenderer.invoke('file:getStats', filePath),
-  inspectFile: (filePath) => ipcRenderer.invoke('core:inspect', filePath),
-  processFile: (filePath, options) =>
-    ipcRenderer.invoke('core:process', {
-      filePath,
-      options: options && typeof options === 'object' ? options : {},
-    }),
+  readFileMetadata: (filePath) => ipcRenderer.invoke('core:readMetadata', filePath),
+  processFile: (filePath, options) => ipcRenderer.invoke('core:process', { filePath, options }),
+  writeTags: (filePath, tags) => ipcRenderer.invoke('core:writeTags', { filePath, tags }),
   exportFile: (processedPath) => ipcRenderer.invoke('core:export', processedPath),
   cleanupProcessedFile: (processedPath) =>
     ipcRenderer.invoke('core:cleanupProcessed', processedPath),
+  onAppFlushRequest: (cb) => {
+    const handler = () => cb();
+    ipcRenderer.on('app:flushRequest', handler);
+    return () => ipcRenderer.removeListener('app:flushRequest', handler);
+  },
+  notifyFlushDone: () => ipcRenderer.send('app:flushDone'),
   logToMain: (level, message) => ipcRenderer.send('ui:log', { level, message }),
   onCoreStatus: (cb) => {
     const handler = (_event, data) => cb(data);

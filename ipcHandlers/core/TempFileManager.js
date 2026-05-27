@@ -1,3 +1,17 @@
+/**
+ * Tracks processed-WAV temp files under `os.tmpdir()/dissonance/` and
+ * cleans them up safely.
+ *
+ *   makeTempProcessedPath()    – mint a unique output path for the core to write to
+ *   ensureRootDir()            – create the temp root on demand
+ *   registerForSender(id,path) – remember a file so we can clean it later
+ *   cleanupForSender(id)       – unlink the file associated with a renderer
+ *   cleanupTempFile(path)      – unlink a single tracked-or-under-root file
+ *   cleanupAll()               – unlink everything we registered (called on quit)
+ *
+ * isUnderRoot() guards against accidentally unlinking arbitrary user files
+ * if a path was ever spoofed through IPC.
+ */
 const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
@@ -9,24 +23,24 @@ class TempFileManager {
     this.tempFileBySenderId = new Map();
   }
 
-  getRootDir() {
-    return this.rootDir;
-  }
-
+  /**
+   * Build a unique processed-output path under the temp root. Doesn't create
+   * the file — just generates the path. The directory is ensured on first use.
+   */
   makeTempProcessedPath(inputPath) {
     const base = path.basename(inputPath, path.extname(inputPath) || '.wav');
     const stamp = Date.now();
     return path.join(this.rootDir, `${base}-processed-${stamp}.wav`);
   }
 
+  async ensureRootDir() {
+    await fs.mkdir(this.rootDir, { recursive: true });
+  }
+
   registerForSender(senderId, filePath) {
     if (!filePath) return;
     this.tempFiles.add(filePath);
     if (senderId) this.tempFileBySenderId.set(senderId, filePath);
-  }
-
-  getForSender(senderId) {
-    return senderId ? this.tempFileBySenderId.get(senderId) : null;
   }
 
   async cleanupForSender(senderId) {
@@ -56,6 +70,12 @@ class TempFileManager {
     }
   }
 
+  /**
+   * Delete a tracked temp file. Refuses to unlink anything that isn't
+   * either in the tracked set OR physically under the temp root — even if
+   * the renderer asks us to. Defends against a spoofed/stale path
+   * accidentally deleting a user file.
+   */
   async cleanupTempFile(filePath) {
     if (!filePath) return;
     if (!this.tempFiles.has(filePath) && !this.isUnderRoot(filePath)) return;

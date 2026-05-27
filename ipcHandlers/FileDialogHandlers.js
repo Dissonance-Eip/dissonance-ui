@@ -1,3 +1,7 @@
+/**
+ * `dialog:openFile` IPC — shows the native OS file picker filtered to audio
+ * formats, returns the absolute path or `null` if the user canceled.
+ */
 const { ipcMain, dialog } = require('electron');
 
 class FileDialogHandlers {

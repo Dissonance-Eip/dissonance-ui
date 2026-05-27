@@ -1,3 +1,9 @@
+/**
+ * Wraps the single application BrowserWindow.
+ * Holds the configured preload path, creates the window on first request,
+ * and exposes `getWindow()` so other modules don't have to track lifecycle.
+ * contextIsolation is on / nodeIntegration is off (renderer security).
+ */
 const { BrowserWindow } = require('electron');
 
 class MainWindowManager {

@@ -1,3 +1,10 @@
+/**
+ * Resource-tracking base class.
+ *
+ * track(fn) registers a teardown callback; dispose() runs them all in LIFO
+ * order exactly once. Used by BaseComponent and BaseController to keep
+ * event listeners + child disposables tidy when a view/controller unmounts.
+ */
 export class Disposable {
   constructor() {
     this._disposables = [];

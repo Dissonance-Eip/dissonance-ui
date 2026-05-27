@@ -1,7 +1,12 @@
+/**
+ * First screen — owns a DropZone and re-emits its file-selected event up
+ * to the controller via onFileImported(cb). Intentionally tiny; all the
+ * drag/drop wiring lives in DropZone.
+ */
 import { DropZone } from '../components/DropZone.js';
-import { BaseView } from '../base/BaseView.js';
+import { BaseComponent } from '../base/BaseComponent.js';
 
-export class UploadView extends BaseView {
+export class UploadView extends BaseComponent {
   constructor({ dropZoneEl, api, logger }) {
     super();
     this.dropZone = new DropZone({ el: dropZoneEl, api, logger });

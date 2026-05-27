@@ -1,24 +1,14 @@
-import { BaseView } from '../base/BaseView.js';
+/**
+ * Third screen after processing: side-by-side comparison of the original
+ * and the processed WAV. Hosts two independent WaveformPreview instances
+ * + an info panel each + a single Export button. _renderInfo() is shared
+ * between the two sides; otherwise each preview is fully encapsulated.
+ */
+import { BaseComponent } from '../base/BaseComponent.js';
+import { WaveformPreview } from '../components/WaveformPreview.js';
+import { formatDuration, formatSampleRate, formatChannels } from '../utils/wavInfoFormatters.js';
 
-function formatDuration(durationSec) {
-  if (typeof durationSec === 'number' && Number.isFinite(durationSec) && durationSec >= 0) {
-    const total = Math.round(durationSec);
-    const m = Math.floor(total / 60);
-    const s = total % 60;
-    return `${m}:${String(s).padStart(2, '0')}`;
-  }
-  return '—';
-}
-
-function formatSampleRate(sampleRate) {
-  return sampleRate ? `${sampleRate} Hz` : '—';
-}
-
-function formatChannels(channels) {
-  return channels ? String(channels) : '—';
-}
-
-export class CompareView extends BaseView {
+export class CompareView extends BaseComponent {
   constructor({
     origFilenameEl,
     origDurationEl,
@@ -37,219 +27,92 @@ export class CompareView extends BaseView {
     this.origDurationEl = origDurationEl;
     this.origSampleRateEl = origSampleRateEl;
     this.origChannelsEl = origChannelsEl;
-    this.origWaveformEl = origWaveformEl;
 
     this.procFilenameEl = procFilenameEl;
     this.procDurationEl = procDurationEl;
     this.procSampleRateEl = procSampleRateEl;
     this.procChannelsEl = procChannelsEl;
-    this.procWaveformEl = procWaveformEl;
 
     this.exportBtn = exportBtn;
 
-    this._origPlayer = null;
-    this._procPlayer = null;
-    this._origUrl = null;
-    this._procUrl = null;
-
-    this._origFilePath = null;
-    this._procFilePath = null;
-    this._themeMode = null;
-
-    this._onThemeChanged = this._onThemeChanged.bind(this);
+    this._origPreview = new WaveformPreview({ containerEl: origWaveformEl, height: 140 });
+    this._procPreview = new WaveformPreview({ containerEl: procWaveformEl, height: 140 });
   }
 
   mount() {
     super.mount();
-    this.track(() => this.clearAudioPreviews());
-    this.listen(window, 'dissonance:theme', this._onThemeChanged);
+    this._origPreview.mount();
+    this._procPreview.mount();
+    this.track(() => this._origPreview.unmount());
+    this.track(() => this._procPreview.unmount());
   }
 
+  // ---------------------------------------------------------------------------
+  // Waveform previews
+  // ---------------------------------------------------------------------------
+
   setAudioPreviewFiles({ originalPath, processedPath }) {
-    this.setOriginalAudioPreviewFile(originalPath);
-    this.setProcessedAudioPreviewFile(processedPath);
+    this._origPreview.setFile(originalPath);
+    this._procPreview.setFile(processedPath);
   }
 
   setOriginalAudioPreviewFile(filePath) {
-    this._origFilePath = filePath || null;
-    this._origUrl = null;
-    this._setAudioPreviewInto({
-      filePath,
-      el: this.origWaveformEl,
-      getPlayer: () => this._origPlayer,
-      setPlayer: (p) => {
-        this._origPlayer = p;
-      },
-      setUrl: (url) => {
-        this._origUrl = url;
-      },
-    });
+    this._origPreview.setFile(filePath);
   }
 
   setProcessedAudioPreviewFile(filePath) {
-    this._procFilePath = filePath || null;
-    this._procUrl = null;
-    this._setAudioPreviewInto({
-      filePath,
-      el: this.procWaveformEl,
-      getPlayer: () => this._procPlayer,
-      setPlayer: (p) => {
-        this._procPlayer = p;
-      },
-      setUrl: (url) => {
-        this._procUrl = url;
-      },
-    });
+    this._procPreview.setFile(filePath);
   }
 
   pauseAudioPreviews() {
-    try {
-      this._origPlayer?.pause?.();
-    } catch (_e) {}
-    try {
-      this._procPlayer?.pause?.();
-    } catch (_e) {}
+    this._origPreview.pause();
+    this._procPreview.pause();
   }
 
   clearAudioPreviews() {
-    this._origUrl = null;
-    this._procUrl = null;
-
-    try {
-      this._origPlayer?.pause?.();
-      this._origPlayer?.destroy?.();
-    } catch (_e) {}
-    this._origPlayer = null;
-
-    try {
-      this._procPlayer?.pause?.();
-      this._procPlayer?.destroy?.();
-    } catch (_e) {}
-    this._procPlayer = null;
-
-    if (this.origWaveformEl) this.origWaveformEl.innerHTML = '';
-    if (this.procWaveformEl) this.procWaveformEl.innerHTML = '';
+    this._origPreview.clear();
+    this._procPreview.clear();
   }
 
-  _setAudioPreviewInto({ filePath, el, getPlayer, setPlayer, setUrl }) {
-    if (!el) return;
-
-    if (!filePath) {
-      if (el) el.innerHTML = '';
-      try {
-        getPlayer()?.pause?.();
-        getPlayer()?.destroy?.();
-      } catch (_e) {}
-      setPlayer(null);
-      setUrl(null);
-      return;
-    }
-
-    const url = this._toFileUrl(filePath);
-    if (!url) {
-      if (el) el.innerHTML = '';
-      try {
-        getPlayer()?.pause?.();
-        getPlayer()?.destroy?.();
-      } catch (_e) {}
-      setPlayer(null);
-      setUrl(null);
-      return;
-    }
-
-    const existing = getPlayer();
-    if (existing && typeof existing.loadTrack === 'function') {
-      setUrl(url);
-      existing.loadTrack(url);
-      return;
-    }
-
-    const WaveformPlayer = window.WaveformPlayer;
-    if (typeof WaveformPlayer !== 'function') return;
-
-    // Ensure container empty before attaching the player.
-    el.innerHTML = '';
-    setUrl(url);
-    setPlayer(
-      new WaveformPlayer(el, {
-        url,
-        waveformStyle: 'mirror',
-        height: 140,
-        showInfo: false,
-        showTime: false,
-        showBPM: false,
-        showPlaybackSpeed: false,
-        ...this._getWaveformColors(),
-      })
-    );
-  }
-
-  _getWaveformColors() {
-    const isDark = !!document?.documentElement?.classList?.contains('dark');
-    if (isDark) {
-      return {
-        waveformColor: 'rgba(226, 232, 240, 0.30)',
-        progressColor: 'rgba(226, 232, 240, 0.95)',
-        buttonColor: 'rgba(226, 232, 240, 0.95)',
-      };
-    }
-
-    return {
-      waveformColor: 'rgba(15, 23, 42, 0.25)',
-      progressColor: 'rgba(15, 23, 42, 0.9)',
-      buttonColor: 'rgba(15, 23, 42, 0.9)',
-    };
-  }
-
-  _onThemeChanged(e) {
-    const mode = e && e.detail && e.detail.mode ? String(e.detail.mode) : null;
-    if (mode && mode === this._themeMode) return;
-    this._themeMode = mode;
-
-    // Only re-theme if we've already created players.
-    if (!this._origPlayer && !this._procPlayer) return;
-
-    const originalPath = this._origFilePath;
-    const processedPath = this._procFilePath;
-
-    this.clearAudioPreviews();
-
-    if (originalPath) this.setOriginalAudioPreviewFile(originalPath);
-    if (processedPath) this.setProcessedAudioPreviewFile(processedPath);
-  }
-
-  _toFileUrl(filePath) {
-    try {
-      // filePath should be an absolute path like /Users/... on macOS.
-      return new URL(`file://${filePath}`).toString();
-    } catch (_e) {
-      return null;
-    }
-  }
-
-  setExportEnabled(enabled) {
-    if (!this.exportBtn) return;
-    this.exportBtn.disabled = !enabled;
-  }
-
-  onExport(cb) {
-    if (!this.exportBtn) return;
-    this.listen(this.exportBtn, 'click', cb);
-  }
+  // ---------------------------------------------------------------------------
+  // Info panels
+  // ---------------------------------------------------------------------------
 
   setOriginalInfo(basicInfo) {
-    const { filename, durationSec, sampleRate, channels } = basicInfo || {};
-    if (this.origFilenameEl) this.origFilenameEl.textContent = filename || '—';
-    if (this.origDurationEl) this.origDurationEl.textContent = formatDuration(durationSec);
-    if (this.origSampleRateEl) this.origSampleRateEl.textContent = formatSampleRate(sampleRate);
-    if (this.origChannelsEl) this.origChannelsEl.textContent = formatChannels(channels);
+    this._renderInfo(basicInfo, {
+      filenameEl: this.origFilenameEl,
+      durationEl: this.origDurationEl,
+      sampleRateEl: this.origSampleRateEl,
+      channelsEl: this.origChannelsEl,
+    });
   }
 
   setProcessedInfo(basicInfo) {
+    this._renderInfo(basicInfo, {
+      filenameEl: this.procFilenameEl,
+      durationEl: this.procDurationEl,
+      sampleRateEl: this.procSampleRateEl,
+      channelsEl: this.procChannelsEl,
+    });
+  }
+
+  _renderInfo(basicInfo, { filenameEl, durationEl, sampleRateEl, channelsEl }) {
     const { filename, durationSec, sampleRate, channels } = basicInfo || {};
-    if (this.procFilenameEl) this.procFilenameEl.textContent = filename || '—';
-    if (this.procDurationEl) this.procDurationEl.textContent = formatDuration(durationSec);
-    if (this.procSampleRateEl) this.procSampleRateEl.textContent = formatSampleRate(sampleRate);
-    if (this.procChannelsEl) this.procChannelsEl.textContent = formatChannels(channels);
+    if (filenameEl) filenameEl.textContent = filename || '—';
+    if (durationEl) durationEl.textContent = formatDuration(durationSec);
+    if (sampleRateEl) sampleRateEl.textContent = formatSampleRate(sampleRate);
+    if (channelsEl) channelsEl.textContent = formatChannels(channels);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Buttons
+  // ---------------------------------------------------------------------------
+
+  setExportEnabled(enabled) {
+    if (this.exportBtn) this.exportBtn.disabled = !enabled;
+  }
+
+  onExport(cb) {
+    if (this.exportBtn) this.listen(this.exportBtn, 'click', cb);
   }
 }
