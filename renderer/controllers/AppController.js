@@ -198,9 +198,20 @@ export class AppController extends BaseController {
       await this._pauseAndFlushTags();
 
       const modes = this.analyzeView.getProcessingModes?.() ?? [];
-      const options = modes.length
-        ? { modes }
-        : { perturbation: this.analyzeView.getProtectionStrength() };
+      const sliderValue = this.analyzeView.getProtectionStrength();
+
+      let options;
+      if (modes.length > 0) {
+        options = { modes, perturbation: 0.5 };
+      } else if (sliderValue > 0) {
+        const stacked = ['white_noise'];
+        if (sliderValue > 0.25) stacked.push('phase_distortion');
+        if (sliderValue > 0.50) stacked.push('spectral_gate');
+        if (sliderValue > 0.75) stacked.push('pink_noise');
+        options = { modes: stacked, perturbation: sliderValue };
+      } else {
+        options = {};
+      }
       const resp = await this.api.processFile(this.state.currentFilePath, options);
       if (resp && resp.ok && resp.processedPath) {
         // Write the user's edited metadata tags into the processed file.
