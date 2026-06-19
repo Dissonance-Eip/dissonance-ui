@@ -206,7 +206,7 @@ export class AppController extends BaseController {
       } else if (sliderValue > 0) {
         const stacked = ['white_noise'];
         if (sliderValue > 0.25) stacked.push('phase_distortion');
-        if (sliderValue > 0.50) stacked.push('spectral_gate');
+        if (sliderValue > 0.5) stacked.push('spectral_gate');
         if (sliderValue > 0.75) stacked.push('pink_noise');
         options = { modes: stacked, perturbation: sliderValue };
       } else {
