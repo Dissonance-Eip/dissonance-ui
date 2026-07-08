@@ -77,9 +77,14 @@ Seven WAV tag fields (title, artist, date, genre, comment, copyright, software) 
 - Switching files or quitting → flushes pending writes first (no edits ever lost)
 - Writes are serialised so the underlying read-modify-write can't be raced
 
-### Protection strength
+### Protection
 
-Single slider (0–1, step 0.01) on the Analyze view, forwarded to the core as `options.perturbation`. The CLI also accepts `--perturbation` for headless runs.
+Two ways to control protection in the Analyze view, forwarded to the core in the `process` options:
+
+- **Strength slider** (0–1, step 0.01) → `options.perturbation`. When no modes are checked, the slider auto-stacks modes by intensity (white_noise, then phase_distortion above 25%, spectral_gate above 50%, pink_noise above 75%).
+- **Mode checkboxes** — pick specific perturbation modes (`white_noise`, `phase_distortion`, `spectral_gate`, `pink_noise`) → `options.modes`. Selecting any mode disables the slider.
+
+The CLI exposes the same via `--perturbation` and repeatable `--mode <name>`.
 
 ### Waveform
 
