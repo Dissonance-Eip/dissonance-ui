@@ -11,6 +11,7 @@
  */
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 const { MainWindowManager } = require('./MainWindowManager');
 const { registerFileHandlers } = require('../ipcHandlers/fileHandlers');
@@ -21,8 +22,10 @@ const FLUSH_TIMEOUT_MS = 3000;
 class MainApplication {
   constructor({ uiRoot = path.join(__dirname, '..') } = {}) {
     this.uiRoot = uiRoot;
+    this.iconPath = path.join(this.uiRoot, 'resources', 'icon.png');
     this.windowManager = new MainWindowManager({
       preloadPath: path.join(this.uiRoot, 'preload.js'),
+      iconPath: this.iconPath,
     });
 
     // Lifecycle flags
@@ -32,8 +35,14 @@ class MainApplication {
   }
 
   run() {
+    // Dev-mode (unpacked) name — packaged builds get their name from the
+    // electron-builder `productName` config instead. Must be set before
+    // whenReady() for the Dock/menu bar to pick it up.
+    app.setName('Dissonance');
+
     app.whenReady().then(() => {
       this._createAndInitWindow();
+      this._applyDockIcon();
 
       app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
@@ -77,6 +86,22 @@ class MainApplication {
 
     // Final cleanup runs exactly once, just before the app actually exits.
     app.on('will-quit', () => this._cleanup());
+  }
+
+  /**
+   * Dev-mode (unpacked) Dock icon on macOS — BrowserWindow's `icon` option
+   * is a Windows/Linux thing and is ignored for the app icon on macOS, so
+   * this is the only way to override it there before packaging exists.
+   * A no-op until resources/icon.png is actually added.
+   */
+  _applyDockIcon() {
+    if (process.platform !== 'darwin' || !app.dock) return;
+    if (!fs.existsSync(this.iconPath)) return;
+    try {
+      app.dock.setIcon(this.iconPath);
+    } catch (_e) {
+      // ignore — cosmetic only
+    }
   }
 
   _createAndInitWindow() {

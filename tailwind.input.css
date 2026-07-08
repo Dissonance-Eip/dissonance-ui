@@ -8,3 +8,20 @@
     scroll-behavior: smooth;
   }
 }
+
+/* Indeterminate progress bar (no real percentage available from the core
+   addon yet) — a segment slides back and forth across the track. */
+@keyframes indeterminate-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@layer utilities {
+  .animate-indeterminate-bar {
+    animation: indeterminate-bar 1.2s ease-in-out infinite;
+  }
+}

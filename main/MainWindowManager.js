@@ -5,19 +5,27 @@
  * contextIsolation is on / nodeIntegration is off (renderer security).
  */
 const { BrowserWindow } = require('electron');
+const fs = require('fs');
 
 class MainWindowManager {
-  constructor({ preloadPath }) {
+  constructor({ preloadPath, iconPath }) {
     this.preloadPath = preloadPath;
+    this.iconPath = iconPath;
     this._window = null;
   }
 
-  createWindow({ width = 800, height = 800 } = {}) {
+  createWindow({ width = 800, height = 700 } = {}) {
     if (this._window) return this._window;
+
+    // Only Windows/Linux respect this for the app icon — macOS uses the
+    // Dock icon set separately (see MainApplication#_applyDockIcon). Guard
+    // on existence so a missing resources/icon.png doesn't error out.
+    const hasIcon = this.iconPath && fs.existsSync(this.iconPath);
 
     this._window = new BrowserWindow({
       width,
       height,
+      ...(hasIcon ? { icon: this.iconPath } : {}),
       webPreferences: {
         preload: this.preloadPath,
         contextIsolation: true,

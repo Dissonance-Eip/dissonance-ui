@@ -1,8 +1,9 @@
 {
-  "name": "dissonance-ui",
+  "name": "Dissonance",
+  "productName": "Dissonance",
   "version": "0.1.0",
   "private": true,
-  "description": "Dissonance UI Electron shell (JavaScript only)",
+  "description": "Silencing AI, Preserving Sound",
   "main": "main.js",
   "scripts": {
     "build:css": "tailwindcss -c ./tailwind.config.js -i ./tailwind.input.css -o ./tailwind.css",
@@ -12,6 +13,8 @@
     "prebuild": "npm run build:css",
     "start": "electron .",
     "dev": "electron .",
+    "dev:with-core": "npm run build:core && npm run build:css && DISSONANCE_CORE_ADDON_PATH=../core/build/Release/dissonance_core.node electron .",
+    "build:core": "cd ../core && npm run build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
@@ -22,6 +25,22 @@
   },
   "author": "",
   "license": "MIT",
+  "build": {
+    "appId": "com.dissonanceeip.dissonance",
+    "productName": "Dissonance",
+    "directories": {
+      "buildResources": "resources"
+    },
+    "mac": {
+      "icon": "resources/icon.png"
+    },
+    "win": {
+      "icon": "resources/icon.png"
+    },
+    "linux": {
+      "icon": "resources/icon.png"
+    }
+  },
   "dependencies": {
     "@arraypress/waveform-player": "^1.5.2",
     "bindings": "^1.5.0"
