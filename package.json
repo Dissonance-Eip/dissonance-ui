@@ -1,7 +1,7 @@
 {
   "name": "Dissonance",
   "productName": "Dissonance",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Silencing AI, Preserving Sound",
   "main": "main.js",
@@ -20,6 +20,8 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check .",
     "build": "electron-builder --dir",
+    "predist": "npm run build:css",
+    "dist": "electron-builder --publish never",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -32,13 +34,24 @@
       "buildResources": "resources"
     },
     "mac": {
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.png",
+      "target": [
+        "dmg",
+        "zip"
+      ]
     },
     "win": {
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.png",
+      "target": [
+        "nsis"
+      ]
     },
     "linux": {
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.png",
+      "target": [
+        "AppImage"
+      ],
+      "category": "AudioVideo"
     }
   },
   "dependencies": {
