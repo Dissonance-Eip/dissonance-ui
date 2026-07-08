@@ -42,6 +42,7 @@ export function bootstrap() {
   const router = new ViewRouter({
     upload: document.getElementById('view-upload'),
     analyze: document.getElementById('view-analyze'),
+    processing: document.getElementById('view-processing'),
     compare: document.getElementById('view-compare'),
   });
 
@@ -98,6 +99,7 @@ export function bootstrap() {
     analyzeView,
     compareView,
     headerEl: document.getElementById('appHeader'),
+    restartBtn: document.getElementById('restartBtn'),
     wavMetadataService,
   });
 

@@ -1,14 +1,23 @@
 /**
- * Top-level renderer controller — owns the three-view flow and the
- * TagWriteQueue. start() wires every event the app reacts to:
+ * Top-level renderer controller — owns the four-view flow (upload / analyze /
+ * processing / compare) and the TagWriteQueue. start() wires every event the
+ * app reacts to:
  *
  *   • upload / drop → importFile → analyze view
  *   • change file → re-open dialog → importFile
  *   • tag blur → enqueue write (queue defers while audio plays)
  *   • playback play/pause → toggle queue blocked state
- *   • process → flush queue → core processes → tag the output → compare view
+ *   • process → processing view (dedicated loading screen) → flush queue →
+ *     core processes → tag the output → populate + reveal compare view
+ *     (or back to analyze on error)
  *   • export → copy temp to user location → reset to upload
+ *   • restart (always-visible button, any screen) → flush + reset to upload,
+ *     discarding any in-flight processing result via the operation id
  *   • quit flush request → pause, snapshot form, drain, notify main
+ *
+ * Compare's content is only populated once the processing screen is showing
+ * — never while `#view-compare` itself is hidden — so the waveform players
+ * inside it always initialize against a laid-out, visible container.
  *
  * _pauseAndFlushTags() is the single chokepoint used by importFile,
  * processCurrentFile, and the quit handler; see its comment.
@@ -26,6 +35,7 @@ export class AppController extends BaseController {
     analyzeView,
     compareView,
     headerEl,
+    restartBtn,
     wavMetadataService,
   }) {
     super();
@@ -37,10 +47,19 @@ export class AppController extends BaseController {
     this.analyzeView = analyzeView;
     this.compareView = compareView;
     this.headerEl = headerEl;
+    this.restartBtn = restartBtn;
     this.wavMetadataService = wavMetadataService;
 
     this._originalBasicInfo = null;
     this._processedBasicInfo = null;
+
+    // Bumped on every processCurrentFile() call and on restart(); a
+    // processCurrentFile() run checks this after each await and bails if it
+    // no longer matches, so a restart mid-processing can't have its (now
+    // irrelevant) result land on top of the reset UI. The in-flight core
+    // call itself isn't cancelled — there's no cancellation IPC — this just
+    // makes the renderer ignore the stale result when it eventually arrives.
+    this._activeOperationId = 0;
 
     // Serialised, blockable queue for auto-saving tag edits. Blocked while
     // the audio element is streaming a file; flushed on quit.
@@ -103,6 +122,12 @@ export class AppController extends BaseController {
     });
 
     this.compareView.onExport(() => this.exportProcessedFile());
+
+    if (this.restartBtn) {
+      const onRestart = () => this.restart();
+      this.restartBtn.addEventListener('click', onRestart);
+      this.track(() => this.restartBtn.removeEventListener('click', onRestart));
+    }
 
     // Before the app quits: pause playback, drain the queue, signal main.
     window.dissonance.onAppFlushRequest(async () => {
@@ -189,9 +214,19 @@ export class AppController extends BaseController {
       return;
     }
 
+    const operationId = ++this._activeOperationId;
+
     try {
       this.logger?.setStatus?.('Processing...');
       this.logger?.log?.('Sending processing request to dissonance-core');
+
+      // Navigate to a dedicated loading screen immediately instead of making
+      // the user wait on Analyze — the core call below can take a few
+      // seconds and staring at an unchanged screen feels broken. Compare
+      // itself isn't shown until its content is populated below, so the
+      // waveform players never initialize against a hidden (zero-size)
+      // container.
+      this._showProcessing();
 
       // Pause playback + capture any unsaved tag edits + drain the queue
       // before the core reads the input file.
@@ -213,6 +248,14 @@ export class AppController extends BaseController {
         options = {};
       }
       const resp = await this.api.processFile(this.state.currentFilePath, options);
+
+      if (operationId !== this._activeOperationId) {
+        // The app was restarted while this request was in flight — the core
+        // can't be cancelled mid-run, so just ignore the now-stale result.
+        this.logger?.log?.('Discarding processing result — app was restarted');
+        return;
+      }
+
       if (resp && resp.ok && resp.processedPath) {
         // Write the user's edited metadata tags into the processed file.
         const editedTags = this.analyzeView.getMetadataTags?.() ?? {};
@@ -246,8 +289,11 @@ export class AppController extends BaseController {
       const errMsg = resp && resp.error ? resp.error : 'Unknown error';
       this.logger?.setStatus?.(`Processing failed: ${errMsg}`, true);
       this.logger?.log?.(`Processing failed: ${errMsg}`);
+      this._showAnalyze();
     } catch (err) {
+      if (operationId !== this._activeOperationId) return; // restarted mid-flight; ignore
       this.logger?.error?.(`Processing failed: ${err}`);
+      this._showAnalyze();
     }
   }
 
@@ -279,6 +325,26 @@ export class AppController extends BaseController {
     } catch (err) {
       this.logger?.error?.(`Export failed: ${err}`);
     }
+  }
+
+  /**
+   * Abandon whatever's in progress and go back to Upload, from any screen.
+   * Doesn't cancel an in-flight core call (no cancellation IPC exists) —
+   * invalidating the operation id just makes processCurrentFile() discard
+   * that result when it eventually arrives instead of acting on it.
+   */
+  async restart() {
+    this._activeOperationId++;
+    this.logger?.log?.('Restarting');
+
+    await this._pauseAndFlushTags().catch(() => {});
+
+    if (this.state.processedFilePath) {
+      this.api.cleanupProcessedFile(this.state.processedFilePath).catch(() => {});
+    }
+
+    this._resetToUpload();
+    this.logger?.setStatus?.('Ready');
   }
 
   _syncButtons() {
@@ -320,6 +386,12 @@ export class AppController extends BaseController {
     this.router.show('compare');
     this._setHeaderVisible(false);
     this._syncButtons();
+  }
+
+  _showProcessing() {
+    this.analyzeView.pauseAudioPreview();
+    this.router.show('processing');
+    this._setHeaderVisible(false);
   }
 
   _resetToUpload() {
